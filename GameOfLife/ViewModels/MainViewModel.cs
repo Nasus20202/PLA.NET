@@ -279,6 +279,9 @@ public class MainViewModel : ViewModelBase
                 RulesText = state.Rules.ToString();
 
                 NotifyStatisticsChanged();
+                // Force immediate screen refresh
+                RefreshTrigger++;
+
                 MessageBox.Show(
                     "Game state loaded successfully!",
                     "Success",
