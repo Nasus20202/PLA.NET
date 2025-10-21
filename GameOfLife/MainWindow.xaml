@@ -9,14 +9,14 @@
         mc:Ignorable="d"
         Title="Conway's Game of Life - WPF" Height="800" Width="1400"
         Background="#FF1E1E1E">
-    
+
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
-    
+
     <Window.Resources>
         <converters:ColorStringToBrushConverter x:Key="ColorToBrushConverter"/>
-        
+
         <!-- Modern Button Style with Animations -->
         <Style x:Key="ModernButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#FF2D2D30"/>
@@ -29,7 +29,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
+                        <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
@@ -60,7 +60,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
+                        <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
@@ -90,7 +90,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" 
+                        <Border x:Name="border"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
@@ -156,7 +156,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <ToggleButton Name="ToggleButton" 
+                            <ToggleButton Name="ToggleButton"
                                         Background="{TemplateBinding Background}"
                                         BorderBrush="{TemplateBinding BorderBrush}"
                                         BorderThickness="1"
@@ -218,7 +218,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBoxItem">
-                        <Border Name="Border" 
+                        <Border Name="Border"
                                 Background="{TemplateBinding Background}"
                                 BorderThickness="0"
                                 Padding="{TemplateBinding Padding}">
@@ -235,6 +235,152 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <!-- ScrollBar Styles - Gray -->
+        <Style x:Key="GrayScrollBarThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border Background="#FF666666" CornerRadius="3"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GrayScrollBar" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Background" Value="#FF2D2D30"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource GrayScrollBarThumb}"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="12"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                <Grid>
+                                    <Border Background="{TemplateBinding Background}"/>
+                                    <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource GrayScrollBarThumb}"/>
+                                        </Track.Thumb>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="12"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ScrollBar Styles - Cell Color (Dynamic) -->
+        <Style x:Key="CellColorScrollBarThumb" TargetType="{x:Type Thumb}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Thumb}">
+                        <Border Background="{Binding CellColor, Converter={StaticResource ColorToBrushConverter}}"
+                                CornerRadius="3" Opacity="0.7"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CellColorScrollBar" TargetType="{x:Type ScrollBar}">
+            <Setter Property="Background" Value="#FF2D2D30"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource CellColorScrollBarThumb}"/>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height" Value="12"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                <Grid>
+                                    <Border Background="{TemplateBinding Background}"/>
+                                    <Track x:Name="PART_Track" IsDirectionReversed="False">
+                                        <Track.Thumb>
+                                            <Thumb Style="{StaticResource CellColorScrollBarThumb}"/>
+                                        </Track.Thumb>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width" Value="12"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ScrollViewer Style with Custom ScrollBars -->
+        <Style x:Key="GameScrollViewer" TargetType="{x:Type ScrollViewer}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <ScrollContentPresenter Grid.Column="0" Grid.Row="0"/>
+                            <ScrollBar Grid.Column="1" Grid.Row="0"
+                                     Name="PART_VerticalScrollBar"
+                                     Style="{StaticResource CellColorScrollBar}"
+                                     Value="{TemplateBinding VerticalOffset}"
+                                     Maximum="{TemplateBinding ScrollableHeight}"
+                                     ViewportSize="{TemplateBinding ViewportHeight}"
+                                     Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                            <ScrollBar Grid.Column="0" Grid.Row="1"
+                                     Name="PART_HorizontalScrollBar"
+                                     Orientation="Horizontal"
+                                     Style="{StaticResource CellColorScrollBar}"
+                                     Value="{TemplateBinding HorizontalOffset}"
+                                     Maximum="{TemplateBinding ScrollableWidth}"
+                                     ViewportSize="{TemplateBinding ViewportWidth}"
+                                     Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Zoom Button Style -->
+        <Style x:Key="ZoomButtonStyle" TargetType="Button" BasedOn="{StaticResource ModernButtonStyle}">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
         </Style>
     </Window.Resources>
 
@@ -279,20 +425,20 @@
                             </TextBlock>
                         </StackPanel>
 
-                        <TextBlock Grid.Column="1" Text="Conway's Game of Life" 
+                        <TextBlock Grid.Column="1" Text="Conway's Game of Life"
                                    Style="{StaticResource ModernLabelStyle}"
-                                   FontSize="16" FontWeight="Bold" 
+                                   FontSize="16" FontWeight="Bold"
                                    HorizontalAlignment="Center"/>
 
                         <StackPanel Grid.Column="2" Orientation="Horizontal">
                             <TextBlock Text="Zoom: " Style="{StaticResource ModernLabelStyle}"/>
-                            <Button Content="-" Width="30" Height="25" Margin="5,0" 
-                                    Style="{StaticResource ModernButtonStyle}"
+                            <Button Content="-" Width="30" Height="25" Margin="5,0"
+                                    Style="{StaticResource ZoomButtonStyle}"
                                     Command="{Binding ZoomOutCommand}"/>
-                            <TextBlock Text="{Binding ZoomLevel, StringFormat={}{0:P0}}" 
+                            <TextBlock Text="{Binding ZoomLevel, StringFormat={}{0:P0}}"
                                        Style="{StaticResource ModernLabelStyle}" Width="50" TextAlignment="Center"/>
-                            <Button Content="+" Width="30" Height="25" Margin="5,0" 
-                                    Style="{StaticResource ModernButtonStyle}"
+                            <Button Content="+" Width="30" Height="25" Margin="5,0"
+                                    Style="{StaticResource ZoomButtonStyle}"
                                     Command="{Binding ZoomInCommand}"/>
                         </StackPanel>
                     </Grid>
@@ -300,8 +446,9 @@
 
                 <!-- Game Grid with ScrollViewer for Zoom -->
                 <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"
-                              Background="#FF0E0E0E">
-                    <controls:GameGrid 
+                              Background="#FF0E0E0E"
+                              Style="{StaticResource GameScrollViewer}">
+                    <controls:GameGrid
                         Engine="{Binding Engine}"
                         CellColor="{Binding CellColor, Converter={StaticResource ColorToBrushConverter}}"
                         CellShape="{Binding CellShape}"
@@ -314,27 +461,30 @@
         <!-- Control Panel -->
         <Border Grid.Column="1" Background="#FF252526" Padding="15">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer.Resources>
+                    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource GrayScrollBar}"/>
+                </ScrollViewer.Resources>
                 <StackPanel>
                     <!-- Title -->
-                    <TextBlock Text="Control Panel" FontSize="18" FontWeight="Bold" 
+                    <TextBlock Text="Control Panel" FontSize="18" FontWeight="Bold"
                                Foreground="White" Margin="0,0,0,15"/>
 
                     <!-- Playback Controls -->
                     <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="Playback" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
-                            <Button Content="▶ Start" Command="{Binding StartCommand}" 
+
+                            <Button Content="▶ Start" Command="{Binding StartCommand}"
                                     Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,5"/>
-                            <Button Content="⏸ Stop" Command="{Binding StopCommand}" 
+                            <Button Content="⏸ Stop" Command="{Binding StopCommand}"
                                     Style="{StaticResource DangerButtonStyle}" Margin="0,0,0,5"/>
-                            <Button Content="⏭ Step" Command="{Binding StepCommand}" 
+                            <Button Content="⏭ Step" Command="{Binding StepCommand}"
                                     Style="{StaticResource ModernButtonStyle}" Margin="0,0,0,5"/>
 
                             <TextBlock Text="Speed:" Style="{StaticResource ModernLabelStyle}" Margin="0,10,0,5"/>
-                            <Slider Minimum="1" Maximum="200" Value="{Binding AnimationSpeed}" 
+                            <Slider Minimum="1" Maximum="200" Value="{Binding AnimationSpeed}"
                                     TickFrequency="10" IsSnapToTickEnabled="True"/>
-                            <TextBlock Text="{Binding AnimationSpeed, StringFormat=Speed: {0}}" 
+                            <TextBlock Text="{Binding AnimationSpeed, StringFormat=Speed: {0}}"
                                        Style="{StaticResource ModernLabelStyle}" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -343,10 +493,10 @@
                     <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="Grid Controls" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
-                            <Button Content="🎲 Randomize" Command="{Binding RandomizeCommand}" 
+
+                            <Button Content="🎲 Randomize" Command="{Binding RandomizeCommand}"
                                     Style="{StaticResource ModernButtonStyle}" Margin="0,0,0,5"/>
-                            <Button Content="🗑 Clear" Command="{Binding ClearCommand}" 
+                            <Button Content="🗑 Clear" Command="{Binding ClearCommand}"
                                     Style="{StaticResource DangerButtonStyle}" Margin="0,0,0,5"/>
 
                             <Grid Margin="0,10,0,0">
@@ -364,7 +514,7 @@
                                     <TextBox Text="{Binding GridHeight}" Style="{StaticResource ModernTextBoxStyle}"/>
                                 </StackPanel>
                             </Grid>
-                            <Button Content="Resize Grid" Command="{Binding ResizeGridCommand}" 
+                            <Button Content="Resize Grid" Command="{Binding ResizeGridCommand}"
                                     Style="{StaticResource ModernButtonStyle}" Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
@@ -373,17 +523,17 @@
                     <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="Rules Configuration" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
-                            <TextBlock Text="Format: B[birth]/S[survival]" 
-                                       Style="{StaticResource ModernLabelStyle}" 
+
+                            <TextBlock Text="Format: B[birth]/S[survival]"
+                                       Style="{StaticResource ModernLabelStyle}"
                                        FontSize="11" Foreground="#FFAAAAAA" Margin="0,0,0,5"/>
-                            <TextBlock Text="Example: B3/S23 (Conway)" 
-                                       Style="{StaticResource ModernLabelStyle}" 
+                            <TextBlock Text="Example: B3/S23 (Conway)"
+                                       Style="{StaticResource ModernLabelStyle}"
                                        FontSize="11" Foreground="#FFAAAAAA" Margin="0,0,0,5"/>
-                            
-                            <TextBox Text="{Binding RulesText, UpdateSourceTrigger=PropertyChanged}" 
+
+                            <TextBox Text="{Binding RulesText, UpdateSourceTrigger=PropertyChanged}"
                                      Style="{StaticResource ModernTextBoxStyle}" Margin="0,5,0,0"/>
-                            <Button Content="Apply Rules" Command="{Binding ApplyRulesCommand}" 
+                            <Button Content="Apply Rules" Command="{Binding ApplyRulesCommand}"
                                     Style="{StaticResource ModernButtonStyle}" Margin="0,10,0,0"/>
                         </StackPanel>
                     </Border>
@@ -392,15 +542,15 @@
                     <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="Appearance" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
+
                             <TextBlock Text="Cell Shape:" Style="{StaticResource ModernLabelStyle}" Margin="0,0,0,5"/>
-                            <ComboBox ItemsSource="{Binding AvailableShapes}" 
+                            <ComboBox ItemsSource="{Binding AvailableShapes}"
                                       SelectedItem="{Binding CellShape}"
                                       Style="{StaticResource DarkComboBoxStyle}"
                                       ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}"/>
 
                             <TextBlock Text="Cell Color:" Style="{StaticResource ModernLabelStyle}" Margin="0,10,0,5"/>
-                            <ComboBox SelectedValue="{Binding CellColor}" 
+                            <ComboBox SelectedValue="{Binding CellColor}"
                                       Style="{StaticResource DarkComboBoxStyle}"
                                       ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}">
                                 <ComboBoxItem Content="Lime Green" Tag="#FF00FF00"/>
@@ -419,10 +569,10 @@
                     <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
                         <StackPanel>
                             <TextBlock Text="File Operations" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
-                            <Button Content="💾 Save State" Command="{Binding SaveCommand}" 
+
+                            <Button Content="💾 Save State" Command="{Binding SaveCommand}"
                                     Style="{StaticResource ModernButtonStyle}" Margin="0,0,0,5"/>
-                            <Button Content="📂 Load State" Command="{Binding LoadCommand}" 
+                            <Button Content="📂 Load State" Command="{Binding LoadCommand}"
                                     Style="{StaticResource ModernButtonStyle}" Margin="0,0,0,5"/>
                         </StackPanel>
                     </Border>
@@ -431,7 +581,7 @@
                     <Border Style="{StaticResource PanelStyle}">
                         <StackPanel>
                             <TextBlock Text="Statistics" FontWeight="Bold" Foreground="White" Margin="0,0,0,10"/>
-                            
+
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
@@ -444,27 +594,27 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Generation:" 
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Generation:"
                                            Style="{StaticResource ModernLabelStyle}" Margin="0,0,10,5"/>
-                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Generation}" 
+                                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Generation}"
                                            Style="{StaticResource StatsLabelStyle}" Margin="0,0,0,5"
                                            HorizontalAlignment="Right"/>
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Living Cells:" 
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Living Cells:"
                                            Style="{StaticResource ModernLabelStyle}" Margin="0,0,10,5"/>
-                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LivingCells}" 
+                                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding LivingCells}"
                                            Style="{StaticResource StatsLabelStyle}" Margin="0,0,0,5"
                                            HorizontalAlignment="Right"/>
 
-                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Born:" 
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Born:"
                                            Style="{StaticResource ModernLabelStyle}" Margin="0,0,10,5"/>
-                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BornCells}" 
+                                <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BornCells}"
                                            Style="{StaticResource StatsLabelStyle}" Margin="0,0,0,5"
                                            HorizontalAlignment="Right" Foreground="#FF00FF00"/>
 
-                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Died:" 
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Died:"
                                            Style="{StaticResource ModernLabelStyle}" Margin="0,0,10,5"/>
-                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DeadCells}" 
+                                <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DeadCells}"
                                            Style="{StaticResource StatsLabelStyle}" Margin="0,0,0,5"
                                            HorizontalAlignment="Right" Foreground="#FFFF0000"/>
                             </Grid>
