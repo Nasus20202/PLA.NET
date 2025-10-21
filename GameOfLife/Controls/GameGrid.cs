@@ -24,25 +24,40 @@ public class GameGrid : FrameworkElement
     private bool _forceRender;
     private int _renderSkipCounter;
 
-    public static readonly DependencyProperty EngineProperty =
-        DependencyProperty.Register(nameof(Engine), typeof(GameOfLifeEngine), typeof(GameGrid),
-            new PropertyMetadata(null, OnEngineChanged));
+    public static readonly DependencyProperty EngineProperty = DependencyProperty.Register(
+        nameof(Engine),
+        typeof(GameOfLifeEngine),
+        typeof(GameGrid),
+        new PropertyMetadata(null, OnEngineChanged)
+    );
 
-    public static readonly DependencyProperty CellColorProperty =
-        DependencyProperty.Register(nameof(CellColor), typeof(Brush), typeof(GameGrid),
-            new PropertyMetadata(Brushes.LimeGreen, OnVisualPropertyChanged));
+    public static readonly DependencyProperty CellColorProperty = DependencyProperty.Register(
+        nameof(CellColor),
+        typeof(Brush),
+        typeof(GameGrid),
+        new PropertyMetadata(Brushes.LimeGreen, OnVisualPropertyChanged)
+    );
 
-    public static readonly DependencyProperty CellShapeProperty =
-        DependencyProperty.Register(nameof(CellShape), typeof(string), typeof(GameGrid),
-            new PropertyMetadata("Rectangle", OnVisualPropertyChanged));
+    public static readonly DependencyProperty CellShapeProperty = DependencyProperty.Register(
+        nameof(CellShape),
+        typeof(string),
+        typeof(GameGrid),
+        new PropertyMetadata("Rectangle", OnVisualPropertyChanged)
+    );
 
-    public static readonly DependencyProperty ZoomLevelProperty =
-        DependencyProperty.Register(nameof(ZoomLevel), typeof(double), typeof(GameGrid),
-            new PropertyMetadata(1.0, OnZoomChanged));
+    public static readonly DependencyProperty ZoomLevelProperty = DependencyProperty.Register(
+        nameof(ZoomLevel),
+        typeof(double),
+        typeof(GameGrid),
+        new PropertyMetadata(1.0, OnZoomChanged)
+    );
 
-    public static readonly DependencyProperty RefreshTriggerProperty =
-        DependencyProperty.Register(nameof(RefreshTrigger), typeof(int), typeof(GameGrid),
-            new PropertyMetadata(0, OnRefreshTriggerChanged));
+    public static readonly DependencyProperty RefreshTriggerProperty = DependencyProperty.Register(
+        nameof(RefreshTrigger),
+        typeof(int),
+        typeof(GameGrid),
+        new PropertyMetadata(0, OnRefreshTriggerChanged)
+    );
 
     public GameOfLifeEngine? Engine
     {
@@ -149,14 +164,20 @@ public class GameGrid : FrameworkElement
         {
             grid._engine = e.NewValue as GameOfLifeEngine;
             grid._forceRender = true;
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                grid.RebuildGrid();
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
+            grid.Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    grid.RebuildGrid();
+                }),
+                System.Windows.Threading.DispatcherPriority.Loaded
+            );
         }
     }
 
-    private static void OnVisualPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnVisualPropertyChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e
+    )
     {
         if (d is GameGrid grid)
         {
@@ -172,7 +193,10 @@ public class GameGrid : FrameworkElement
         }
     }
 
-    private static void OnRefreshTriggerChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnRefreshTriggerChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e
+    )
     {
         if (d is GameGrid grid)
         {
@@ -258,8 +282,11 @@ public class GameGrid : FrameworkElement
         // Render background
         using (DrawingContext dc = _backgroundVisual.RenderOpen())
         {
-            dc.DrawRectangle(Brushes.Black, null, new Rect(0, 0,
-                _engine.Width * BaseCellSize, _engine.Height * BaseCellSize));
+            dc.DrawRectangle(
+                Brushes.Black,
+                null,
+                new Rect(0, 0, _engine.Width * BaseCellSize, _engine.Height * BaseCellSize)
+            );
         }
 
         // Apply zoom and render
@@ -294,7 +321,10 @@ public class GameGrid : FrameworkElement
         int startX = Math.Max(0, (int)(visibleBounds.Left / BaseCellSize) - margin);
         int endX = Math.Min(_engine.Width, (int)(visibleBounds.Right / BaseCellSize) + margin + 1);
         int startY = Math.Max(0, (int)(visibleBounds.Top / BaseCellSize) - margin);
-        int endY = Math.Min(_engine.Height, (int)(visibleBounds.Bottom / BaseCellSize) + margin + 1);
+        int endY = Math.Min(
+            _engine.Height,
+            (int)(visibleBounds.Bottom / BaseCellSize) + margin + 1
+        );
 
         // Batch rendering - collect all rectangles and draw them together
         if (CellShape == "Rectangle")
@@ -309,7 +339,9 @@ public class GameGrid : FrameworkElement
                         double posX = x * BaseCellSize;
                         double posY = y * BaseCellSize;
                         double size = BaseCellSize - 0.5;
-                        geometry.Children.Add(new RectangleGeometry(new Rect(posX, posY, size, size)));
+                        geometry.Children.Add(
+                            new RectangleGeometry(new Rect(posX, posY, size, size))
+                        );
                     }
                 }
             }
@@ -347,13 +379,11 @@ public class GameGrid : FrameworkElement
         }
         else if (CellShape == "RoundedRectangle")
         {
-            dc.DrawRoundedRectangle(CellColor, null,
-                new Rect(posX, posY, size, size), 2, 2);
+            dc.DrawRoundedRectangle(CellColor, null, new Rect(posX, posY, size, size), 2, 2);
         }
         else
         {
-            dc.DrawRectangle(CellColor, null,
-                new Rect(posX, posY, size, size));
+            dc.DrawRectangle(CellColor, null, new Rect(posX, posY, size, size));
         }
     }
 
@@ -380,7 +410,8 @@ public class GameGrid : FrameworkElement
         if (_viewModel == null)
         {
             _viewModel = DataContext as MainViewModel;
-            if (_viewModel == null) return;
+            if (_viewModel == null)
+                return;
         }
 
         // Calculate zoom change based on wheel delta
@@ -406,7 +437,8 @@ public class GameGrid : FrameworkElement
         if (_viewModel == null)
         {
             _viewModel = DataContext as MainViewModel;
-            if (_viewModel == null) return;
+            if (_viewModel == null)
+                return;
         }
 
         // Since we use LayoutTransform, the position is already in the transformed coordinate space
@@ -421,4 +453,3 @@ public class GameGrid : FrameworkElement
         }
     }
 }
-
