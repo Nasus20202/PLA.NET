@@ -96,8 +96,10 @@ public class GameGrid : FrameworkElement
         _visualChildren = new VisualCollection(this) { _backgroundVisual, _cellsVisual };
 
         ClipToBounds = true;
+        Focusable = true; // Enable keyboard/mouse wheel focus
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseMove += OnMouseMove;
+        MouseWheel += OnMouseWheel;
         SizeChanged += OnSizeChanged;
 
         // Update grid continuously
@@ -333,6 +335,30 @@ public class GameGrid : FrameworkElement
         {
             ReleaseMouseCapture();
         }
+    }
+
+    private void OnMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (_viewModel == null)
+        {
+            _viewModel = DataContext as MainViewModel;
+            if (_viewModel == null)
+                return;
+        }
+
+        // Calculate zoom change based on wheel delta
+        // Positive delta = zoom in, negative = zoom out
+        double zoomDelta = e.Delta > 0 ? 0.1 : -0.1;
+        double newZoom = _viewModel.ZoomLevel + zoomDelta;
+
+        // Clamp zoom between 0.5 and 5.0 for reasonable limits
+        newZoom = Math.Max(0.5, Math.Min(5.0, newZoom));
+
+        // Update the view model's zoom level
+        _viewModel.ZoomLevel = newZoom;
+
+        // Mark as handled so parent controls don't also process it
+        e.Handled = true;
     }
 
     private void HandleMouseInteraction(Point position)

@@ -121,7 +121,7 @@ public class MainViewModel : ViewModelBase
     public double ZoomLevel
     {
         get => _zoomLevel;
-        set => SetProperty(ref _zoomLevel, Math.Max(0.5, Math.Min(2.0, value)));
+        set => SetProperty(ref _zoomLevel, Math.Max(0.5, Math.Min(5.0, value)));
     }
 
     public string CellColor
@@ -337,7 +337,7 @@ public class MainViewModel : ViewModelBase
 
     private void ZoomIn()
     {
-        ZoomLevel = Math.Min(2.0, ZoomLevel + 0.25);
+        ZoomLevel = Math.Min(5.0, ZoomLevel + 0.25);
     }
 
     private void ZoomOut()
