@@ -34,7 +34,7 @@ public class GameState
         sb.AppendLine($"Rules: {Rules}");
         sb.AppendLine($"Generation: {Generation}");
         sb.AppendLine("# Grid (O = alive, . = dead):");
-        
+
         for (int y = 0; y < Height; y++)
         {
             for (int x = 0; x < Width; x++)
@@ -50,19 +50,20 @@ public class GameState
     public static GameState LoadFromFile(string filePath)
     {
         var lines = File.ReadAllLines(filePath);
-        int width = 0, height = 0;
+        int width = 0,
+            height = 0;
         long generation = 0;
         GameRules rules = GameRules.ConwayDefault();
-        
+
         int gridStartLine = 0;
-        
+
         for (int i = 0; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
-            
+
             if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line))
                 continue;
-                
+
             if (line.StartsWith("Width:", StringComparison.OrdinalIgnoreCase))
             {
                 width = int.Parse(line.Substring(6).Trim());
@@ -92,13 +93,13 @@ public class GameState
 
         var cells = new bool[width, height];
         int y = 0;
-        
+
         for (int i = gridStartLine; i < lines.Length && y < height; i++)
         {
             var line = lines[i];
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
                 continue;
-                
+
             for (int x = 0; x < Math.Min(width, line.Length); x++)
             {
                 cells[x, y] = (line[x] == 'O' || line[x] == 'o');
@@ -109,4 +110,3 @@ public class GameState
         return new GameState(width, height, cells, rules, generation);
     }
 }
-

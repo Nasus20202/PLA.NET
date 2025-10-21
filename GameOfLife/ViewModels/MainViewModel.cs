@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -41,7 +41,7 @@ public class MainViewModel : ViewModelBase
 
         _timer = new DispatcherTimer();
         _timer.Tick += Timer_Tick;
-        
+
         InitializeCommands();
         UpdateTimerInterval();
     }
@@ -142,12 +142,8 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _refreshTrigger, value);
     }
 
-    public ObservableCollection<string> AvailableShapes { get; } = new()
-    {
-        "Rectangle",
-        "Ellipse",
-        "RoundedRectangle"
-    };
+    public ObservableCollection<string> AvailableShapes { get; } =
+        new() { "Rectangle", "Ellipse", "RoundedRectangle" };
 
     public string StatusText => IsRunning ? "Running" : "Editing";
 
@@ -216,9 +212,10 @@ public class MainViewModel : ViewModelBase
     {
         var dialog = new SaveFileDialog
         {
-            Filter = "Game of Life files (*.gol)|*.gol|Text files (*.txt)|*.txt|All files (*.*)|*.*",
+            Filter =
+                "Game of Life files (*.gol)|*.gol|Text files (*.txt)|*.txt|All files (*.*)|*.*",
             DefaultExt = "gol",
-            FileName = $"gameoflife_{DateTime.Now:yyyyMMdd_HHmmss}.gol"
+            FileName = $"gameoflife_{DateTime.Now:yyyyMMdd_HHmmss}.gol",
         };
 
         if (dialog.ShowDialog() == true)
@@ -233,11 +230,21 @@ public class MainViewModel : ViewModelBase
                     _engine.Generation
                 );
                 state.SaveToFile(dialog.FileName);
-                MessageBox.Show("Game state saved successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    "Game state saved successfully!",
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Error saving file: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
         }
     }
@@ -246,7 +253,8 @@ public class MainViewModel : ViewModelBase
     {
         var dialog = new OpenFileDialog
         {
-            Filter = "Game of Life files (*.gol)|*.gol|Text files (*.txt)|*.txt|All files (*.*)|*.*"
+            Filter =
+                "Game of Life files (*.gol)|*.gol|Text files (*.txt)|*.txt|All files (*.*)|*.*",
         };
 
         if (dialog.ShowDialog() == true)
@@ -254,7 +262,7 @@ public class MainViewModel : ViewModelBase
             try
             {
                 var state = GameState.LoadFromFile(dialog.FileName);
-                
+
                 // Resize grid if needed
                 if (state.Width != _engine.Width || state.Height != _engine.Height)
                 {
@@ -265,17 +273,27 @@ public class MainViewModel : ViewModelBase
                     OnPropertyChanged(nameof(GridHeight));
                     OnPropertyChanged(nameof(Engine));
                 }
-                
+
                 _engine.SetState(state.Cells);
                 _engine.Rules = state.Rules;
                 RulesText = state.Rules.ToString();
-                
+
                 NotifyStatisticsChanged();
-                MessageBox.Show("Game state loaded successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    "Game state loaded successfully!",
+                    "Success",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(
+                    $"Error loading file: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
         }
     }
@@ -288,8 +306,12 @@ public class MainViewModel : ViewModelBase
         }
         else
         {
-            MessageBox.Show($"Invalid rules format. Using default: B3/S23", "Warning", 
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(
+                $"Invalid rules format. Using default: B3/S23",
+                "Warning",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning
+            );
             RulesText = "B3/S23";
             _engine.Rules = GameRules.ConwayDefault();
         }
@@ -299,8 +321,12 @@ public class MainViewModel : ViewModelBase
     {
         if (GridWidth < 10 || GridWidth > 1000 || GridHeight < 10 || GridHeight > 1000)
         {
-            MessageBox.Show("Grid size must be between 10 and 1000", "Invalid Size", 
-                MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(
+                "Grid size must be between 10 and 1000",
+                "Invalid Size",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning
+            );
             return;
         }
 
@@ -342,7 +368,10 @@ public class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(LivingCells));
         OnPropertyChanged(nameof(Engine));
         // Force trigger property changed to update the view
-        System.Windows.Application.Current?.Dispatcher.Invoke(() => { }, System.Windows.Threading.DispatcherPriority.Render);
+        System.Windows.Application.Current?.Dispatcher.Invoke(
+            () => { },
+            System.Windows.Threading.DispatcherPriority.Render
+        );
     }
 
     public void ToggleCell(int x, int y)
@@ -355,4 +384,3 @@ public class MainViewModel : ViewModelBase
         }
     }
 }
-

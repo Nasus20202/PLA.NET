@@ -11,7 +11,7 @@ public class GameOfLifeEngine
 {
     private bool[,] _currentState;
     private bool[,] _nextState;
-    
+
     public int Width { get; private set; }
     public int Height { get; private set; }
     public GameRules Rules { get; set; }
@@ -89,7 +89,7 @@ public class GameOfLifeEngine
                 int neighbors = CountNeighbors(x, y);
                 bool currentlyAlive = _currentState[x, y];
                 bool nextAlive = Rules.ShouldBeAlive(currentlyAlive, neighbors);
-                
+
                 _nextState[x, y] = nextAlive;
 
                 if (!currentlyAlive && nextAlive)
@@ -116,11 +116,12 @@ public class GameOfLifeEngine
         {
             for (int dy = -1; dy <= 1; dy++)
             {
-                if (dx == 0 && dy == 0) continue;
-                
+                if (dx == 0 && dy == 0)
+                    continue;
+
                 int nx = x + dx;
                 int ny = y + dy;
-                
+
                 if (nx >= 0 && nx < Width && ny >= 0 && ny < Height)
                 {
                     if (_currentState[nx, ny])
@@ -154,8 +155,7 @@ public class GameOfLifeEngine
     {
         if (state.GetLength(0) != Width || state.GetLength(1) != Height)
             throw new ArgumentException("State dimensions must match grid dimensions");
-        
+
         Array.Copy(state, _currentState, state.Length);
     }
 }
-

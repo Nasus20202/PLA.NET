@@ -35,4 +35,3 @@ public class ColorStringToBrushConverter : IValueConverter
         return "#FF00FF00";
     }
 }
-

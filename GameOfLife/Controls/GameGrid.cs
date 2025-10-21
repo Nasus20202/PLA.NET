@@ -15,34 +15,49 @@ public class GameGrid : FrameworkElement
 {
     private GameOfLifeEngine? _engine;
     private MainViewModel? _viewModel;
-    private double _cellSize = 8;
+    private const double BaseCellSize = 10; // Fixed base cell size
     private bool[,]? _previousState;
     private long _lastGeneration = -1;
     private DrawingVisual? _backgroundVisual;
     private DrawingVisual? _cellsVisual;
     private VisualCollection? _visualChildren;
-    private bool _forceRender = false;
-    private int _renderSkipCounter = 0;
+    private bool _forceRender;
+    private int _renderSkipCounter;
 
-    public static readonly DependencyProperty EngineProperty =
-        DependencyProperty.Register(nameof(Engine), typeof(GameOfLifeEngine), typeof(GameGrid),
-            new PropertyMetadata(null, OnEngineChanged));
+    public static readonly DependencyProperty EngineProperty = DependencyProperty.Register(
+        nameof(Engine),
+        typeof(GameOfLifeEngine),
+        typeof(GameGrid),
+        new PropertyMetadata(null, OnEngineChanged)
+    );
 
-    public static readonly DependencyProperty CellColorProperty =
-        DependencyProperty.Register(nameof(CellColor), typeof(Brush), typeof(GameGrid),
-            new PropertyMetadata(Brushes.LimeGreen, OnVisualPropertyChanged));
+    public static readonly DependencyProperty CellColorProperty = DependencyProperty.Register(
+        nameof(CellColor),
+        typeof(Brush),
+        typeof(GameGrid),
+        new PropertyMetadata(Brushes.LimeGreen, OnVisualPropertyChanged)
+    );
 
-    public static readonly DependencyProperty CellShapeProperty =
-        DependencyProperty.Register(nameof(CellShape), typeof(string), typeof(GameGrid),
-            new PropertyMetadata("Rectangle", OnVisualPropertyChanged));
+    public static readonly DependencyProperty CellShapeProperty = DependencyProperty.Register(
+        nameof(CellShape),
+        typeof(string),
+        typeof(GameGrid),
+        new PropertyMetadata("Rectangle", OnVisualPropertyChanged)
+    );
 
-    public static readonly DependencyProperty ZoomLevelProperty =
-        DependencyProperty.Register(nameof(ZoomLevel), typeof(double), typeof(GameGrid),
-            new PropertyMetadata(1.0, OnZoomChanged));
+    public static readonly DependencyProperty ZoomLevelProperty = DependencyProperty.Register(
+        nameof(ZoomLevel),
+        typeof(double),
+        typeof(GameGrid),
+        new PropertyMetadata(1.0, OnZoomChanged)
+    );
 
-    public static readonly DependencyProperty RefreshTriggerProperty =
-        DependencyProperty.Register(nameof(RefreshTrigger), typeof(int), typeof(GameGrid),
-            new PropertyMetadata(0, OnRefreshTriggerChanged));
+    public static readonly DependencyProperty RefreshTriggerProperty = DependencyProperty.Register(
+        nameof(RefreshTrigger),
+        typeof(int),
+        typeof(GameGrid),
+        new PropertyMetadata(0, OnRefreshTriggerChanged)
+    );
 
     public GameOfLifeEngine? Engine
     {
@@ -79,12 +94,12 @@ public class GameGrid : FrameworkElement
         _backgroundVisual = new DrawingVisual();
         _cellsVisual = new DrawingVisual();
         _visualChildren = new VisualCollection(this) { _backgroundVisual, _cellsVisual };
-        
+
         ClipToBounds = true;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseMove += OnMouseMove;
         SizeChanged += OnSizeChanged;
-        
+
         // Update grid continuously
         CompositionTarget.Rendering += OnRendering;
     }
@@ -102,14 +117,14 @@ public class GameGrid : FrameworkElement
     {
         if (_engine != null && _cellsVisual != null)
         {
-            // Throttle rendering - nie renderuj każdej klatki (60 FPS -> ~20-30 FPS jest wystarczające)
+            // Throttle rendering - render every 2-3 frames instead of 60 FPS
             _renderSkipCounter++;
-            if (_renderSkipCounter < 2 && !_forceRender) // Renderuj co 2-3 klatki
+            if (_renderSkipCounter < 2 && !_forceRender)
                 return;
-            
+
             _renderSkipCounter = 0;
 
-            // Aktualizuj gdy generacja się zmieni LUB gdy wymuszono render
+            // Update when generation changes OR when forced
             if (_lastGeneration != _engine.Generation || _forceRender)
             {
                 _lastGeneration = _engine.Generation;
@@ -124,19 +139,25 @@ public class GameGrid : FrameworkElement
         if (d is GameGrid grid)
         {
             grid._engine = e.NewValue as GameOfLifeEngine;
-            grid._forceRender = true; // Wymuś odświeżenie
-            grid.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                grid.RebuildGrid();
-            }), System.Windows.Threading.DispatcherPriority.Loaded);
+            grid._forceRender = true;
+            grid.Dispatcher.BeginInvoke(
+                new Action(() =>
+                {
+                    grid.RebuildGrid();
+                }),
+                System.Windows.Threading.DispatcherPriority.Loaded
+            );
         }
     }
 
-    private static void OnVisualPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnVisualPropertyChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e
+    )
     {
         if (d is GameGrid grid)
         {
-            grid.RenderGrid();
+            grid._forceRender = true;
         }
     }
 
@@ -148,31 +169,30 @@ public class GameGrid : FrameworkElement
         }
     }
 
-    private static void OnRefreshTriggerChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnRefreshTriggerChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e
+    )
     {
         if (d is GameGrid grid)
         {
             grid._forceRender = true;
-            grid.RenderGrid();
         }
     }
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        CalculateCellSize();
+        _forceRender = true;
     }
 
-    private void CalculateCellSize()
+    private void UpdateDimensions()
     {
-        if (_engine == null || ActualWidth == 0 || ActualHeight == 0)
+        if (_engine == null)
             return;
 
-        double baseCellWidth = ActualWidth / _engine.Width;
-        double baseCellHeight = ActualHeight / _engine.Height;
-        _cellSize = Math.Max(2, Math.Min(baseCellWidth, baseCellHeight));
-        
-        UpdateZoom();
-        RenderGrid();
+        // Set natural size based on engine dimensions and base cell size
+        Width = _engine.Width * BaseCellSize;
+        Height = _engine.Height * BaseCellSize;
     }
 
     private void UpdateZoom()
@@ -180,27 +200,14 @@ public class GameGrid : FrameworkElement
         if (_engine == null)
             return;
 
-        var transform = new ScaleTransform(ZoomLevel, ZoomLevel);
-        RenderTransform = transform;
-        
-        // Oblicz wymiary z walidacją
-        double calculatedWidth = _engine.Width * _cellSize * ZoomLevel;
-        double calculatedHeight = _engine.Height * _cellSize * ZoomLevel;
-        
-        // Ustaw tylko jeśli wartości są prawidłowe (> 0 i nie NaN)
-        if (!double.IsNaN(calculatedWidth) && !double.IsInfinity(calculatedWidth) && calculatedWidth > 0)
-        {
-            Width = calculatedWidth;
-        }
-        
-        if (!double.IsNaN(calculatedHeight) && !double.IsInfinity(calculatedHeight) && calculatedHeight > 0)
-        {
-            Height = calculatedHeight;
-        }
-    }
+        // Update base dimensions first
+        UpdateDimensions();
 
-    public void ForceRender()
-    {
+        // Apply zoom transformation using LayoutTransform for proper ScrollViewer interaction
+        // LayoutTransform affects the layout system, so ScrollViewer will see the correct size
+        LayoutTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
+
+        // Force re-render with new zoom
         _forceRender = true;
     }
 
@@ -209,18 +216,24 @@ public class GameGrid : FrameworkElement
         if (_engine == null || _cellsVisual == null || _backgroundVisual == null)
             return;
 
-        _previousState = null; // Reset cache
-        _lastGeneration = -1; // Reset generation counter
+        _previousState = null;
+        _lastGeneration = -1;
 
-        // Renderuj tło
+        // Update dimensions
+        UpdateDimensions();
+
+        // Render background
         using (DrawingContext dc = _backgroundVisual.RenderOpen())
         {
-            dc.DrawRectangle(Brushes.Black, null, new Rect(0, 0, 
-                _engine.Width * _cellSize, _engine.Height * _cellSize));
+            dc.DrawRectangle(
+                Brushes.Black,
+                null,
+                new Rect(0, 0, _engine.Width * BaseCellSize, _engine.Height * BaseCellSize)
+            );
         }
 
-        CalculateCellSize();
-        RenderGrid();
+        // Apply zoom and render
+        UpdateZoom();
     }
 
     private void RenderGrid()
@@ -228,25 +241,10 @@ public class GameGrid : FrameworkElement
         if (_engine == null || _cellsVisual == null)
             return;
 
-        // Sprawdź czy mamy poprzedni stan do porównania
-        bool hasValidPreviousState = _previousState != null && 
-                                      _previousState.GetLength(0) == _engine.Width && 
-                                      _previousState.GetLength(1) == _engine.Height;
-
         using (DrawingContext dc = _cellsVisual.RenderOpen())
         {
-            // Nie rysuj tła tutaj - jest na osobnej warstwie!
-            
-            if (!hasValidPreviousState)
-            {
-                // Pierwszy render - narysuj wszystkie żywe komórki
-                RenderAllCells(dc);
-            }
-            else
-            {
-                // Optymalizacja - rysuj tylko zmienione komórki!
-                RenderAllCells(dc); // Niestety DrawingContext wymaga pełnego redraw
-            }
+            // Background is on a separate layer, just draw the cells
+            RenderAllCells(dc);
 
             // Update cache
             _previousState = _engine.GetStateCopy();
@@ -255,9 +253,10 @@ public class GameGrid : FrameworkElement
 
     private void RenderAllCells(DrawingContext dc)
     {
-        if (_engine == null) return;
+        if (_engine == null)
+            return;
 
-        // Batch rendering - zbierz wszystkie prostokąty i narysuj je jednocześnie
+        // Batch rendering - collect all rectangles and draw them together
         if (CellShape == "Rectangle")
         {
             var geometry = new GeometryGroup();
@@ -267,10 +266,12 @@ public class GameGrid : FrameworkElement
                 {
                     if (_engine.GetCell(x, y))
                     {
-                        double posX = x * _cellSize;
-                        double posY = y * _cellSize;
-                        double size = _cellSize - 0.5;
-                        geometry.Children.Add(new RectangleGeometry(new Rect(posX, posY, size, size)));
+                        double posX = x * BaseCellSize;
+                        double posY = y * BaseCellSize;
+                        double size = BaseCellSize - 0.5;
+                        geometry.Children.Add(
+                            new RectangleGeometry(new Rect(posX, posY, size, size))
+                        );
                     }
                 }
             }
@@ -279,7 +280,7 @@ public class GameGrid : FrameworkElement
         }
         else
         {
-            // Dla kształtów niestandartowych rysuj pojedynczo
+            // For non-standard shapes, draw individually
             for (int x = 0; x < _engine.Width; x++)
             {
                 for (int y = 0; y < _engine.Height; y++)
@@ -295,9 +296,9 @@ public class GameGrid : FrameworkElement
 
     private void DrawCell(DrawingContext dc, int x, int y)
     {
-        double posX = x * _cellSize;
-        double posY = y * _cellSize;
-        double size = _cellSize - 0.5;
+        double posX = x * BaseCellSize;
+        double posY = y * BaseCellSize;
+        double size = BaseCellSize - 0.5;
 
         if (CellShape == "Ellipse")
         {
@@ -308,13 +309,11 @@ public class GameGrid : FrameworkElement
         }
         else if (CellShape == "RoundedRectangle")
         {
-            dc.DrawRoundedRectangle(CellColor, null, 
-                new Rect(posX, posY, size, size), 2, 2);
+            dc.DrawRoundedRectangle(CellColor, null, new Rect(posX, posY, size, size), 2, 2);
         }
         else
         {
-            dc.DrawRectangle(CellColor, null, 
-                new Rect(posX, posY, size, size));
+            dc.DrawRectangle(CellColor, null, new Rect(posX, posY, size, size));
         }
     }
 
@@ -340,21 +339,23 @@ public class GameGrid : FrameworkElement
     {
         if (_engine == null)
             return;
-            
+
         if (_viewModel == null)
         {
             _viewModel = DataContext as MainViewModel;
-            if (_viewModel == null) return;
+            if (_viewModel == null)
+                return;
         }
 
-        int x = (int)(position.X / (_cellSize * ZoomLevel));
-        int y = (int)(position.Y / (_cellSize * ZoomLevel));
+        // Since we use LayoutTransform, the position is already in the transformed coordinate space
+        // We just need to divide by BaseCellSize
+        int x = (int)(position.X / BaseCellSize);
+        int y = (int)(position.Y / BaseCellSize);
 
         if (x >= 0 && x < _engine.Width && y >= 0 && y < _engine.Height)
         {
             _viewModel.ToggleCell(x, y);
-            RenderGrid();
+            _forceRender = true;
         }
     }
 }
-

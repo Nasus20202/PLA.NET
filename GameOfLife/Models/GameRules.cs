@@ -54,7 +54,9 @@ public class GameRules
         // Pattern: B[digits]/S[digits]
         var match = Regex.Match(ruleString.Trim().ToUpper(), @"B(\d*)/S(\d*)");
         if (!match.Success)
-            throw new ArgumentException($"Invalid rule format: {ruleString}. Expected format: B3/S23");
+            throw new ArgumentException(
+                $"Invalid rule format: {ruleString}. Expected format: B3/S23"
+            );
 
         var birthNumbers = match.Groups[1].Value.Select(c => int.Parse(c.ToString()));
         var survivalNumbers = match.Groups[2].Value.Select(c => int.Parse(c.ToString()));
@@ -76,4 +78,3 @@ public class GameRules
         }
     }
 }
-

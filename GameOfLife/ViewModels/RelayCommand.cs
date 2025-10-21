@@ -18,9 +18,7 @@ public class RelayCommand : ICommand
     }
 
     public RelayCommand(Action execute, Func<bool>? canExecute = null)
-        : this(_ => execute(), canExecute != null ? _ => canExecute() : null)
-    {
-    }
+        : this(_ => execute(), canExecute != null ? _ => canExecute() : null) { }
 
     public event EventHandler? CanExecuteChanged
     {
@@ -43,4 +41,3 @@ public class RelayCommand : ICommand
         CommandManager.InvalidateRequerySuggested();
     }
 }
-
