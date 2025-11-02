@@ -511,6 +511,7 @@
           Style="{StaticResource GameScrollViewer}"
         >
           <controls:GameGrid
+            x:Name="GameGridControl"
             Engine="{Binding Engine}"
             CellColor="{Binding CellColor, Converter={StaticResource ColorToBrushConverter}}"
             CellShape="{Binding CellShape}"
@@ -716,6 +717,56 @@
                 Command="{Binding LoadCommand}"
                 Style="{StaticResource ModernButtonStyle}"
                 Margin="0,0,0,5"
+              />
+            </StackPanel>
+          </Border>
+          <!-- Video Recording -->
+          <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
+            <StackPanel>
+              <TextBlock
+                Text="Video Recording"
+                FontWeight="Bold"
+                Foreground="White"
+                Margin="0,0,0,10"
+              />
+              <TextBlock
+                Text="{Binding RecordingStatusText}"
+                Foreground="{Binding IsRecording, Converter={StaticResource ColorToBrushConverter}}"
+                FontWeight="SemiBold"
+                Margin="0,0,0,10"
+              >
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding IsRecording}" Value="True">
+                        <Setter Property="Foreground" Value="#FFFF0000" />
+                      </DataTrigger>
+                      <DataTrigger Binding="{Binding IsRecording}" Value="False">
+                        <Setter Property="Foreground" Value="#FFAAAAAA" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+              <Button
+                Content="🎥 Start Recording"
+                Command="{Binding StartRecordingCommand}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Margin="0,0,0,5"
+              />
+              <Button
+                Content="⏹ Stop Recording"
+                Command="{Binding StopRecordingCommand}"
+                Style="{StaticResource DangerButtonStyle}"
+                Margin="0,0,0,5"
+              />
+              <TextBlock
+                Text="Note: FFmpeg DLLs required"
+                Style="{StaticResource ModernLabelStyle}"
+                FontSize="10"
+                Foreground="#FFAAAAAA"
+                Margin="0,5,0,0"
+                TextWrapping="Wrap"
               />
             </StackPanel>
           </Border>

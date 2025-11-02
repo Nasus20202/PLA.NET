@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using GameOfLife.Models;
+using GameOfLife.Services;
 using Microsoft.Win32;
 
 namespace GameOfLife.ViewModels;
@@ -26,6 +27,8 @@ public class MainViewModel : ViewModelBase
     private string _cellColor;
     private string _cellShape;
     private int _refreshTrigger;
+    private VideoRecorder? _videoRecorder;
+    private bool _isRecording;
 
     public MainViewModel()
     {
@@ -59,6 +62,8 @@ public class MainViewModel : ViewModelBase
         ResizeGridCommand = new RelayCommand(ResizeGrid, () => !IsRunning);
         ZoomInCommand = new RelayCommand(ZoomIn);
         ZoomOutCommand = new RelayCommand(ZoomOut);
+        StartRecordingCommand = new RelayCommand(StartRecording, () => !IsRecording);
+        StopRecordingCommand = new RelayCommand(StopRecording, () => IsRecording);
     }
 
     #region Properties
@@ -142,10 +147,24 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _refreshTrigger, value);
     }
 
+    public bool IsRecording
+    {
+        get => _isRecording;
+        set
+        {
+            if (SetProperty(ref _isRecording, value))
+            {
+                OnPropertyChanged(nameof(RecordingStatusText));
+            }
+        }
+    }
+
     public ObservableCollection<string> AvailableShapes { get; } =
         new() { "Rectangle", "Ellipse", "RoundedRectangle" };
 
     public string StatusText => IsRunning ? "Running" : "Editing";
+
+    public string RecordingStatusText => IsRecording ? "● Recording" : "Not Recording";
 
     public long Generation => _engine.Generation;
     public long BornCells => _engine.BornCells;
@@ -167,6 +186,8 @@ public class MainViewModel : ViewModelBase
     public ICommand ResizeGridCommand { get; private set; } = null!;
     public ICommand ZoomInCommand { get; private set; } = null!;
     public ICommand ZoomOutCommand { get; private set; } = null!;
+    public ICommand StartRecordingCommand { get; private set; } = null!;
+    public ICommand StopRecordingCommand { get; private set; } = null!;
 
     #endregion
 
@@ -348,6 +369,93 @@ public class MainViewModel : ViewModelBase
         ZoomLevel = Math.Max(0.5, ZoomLevel - 0.25);
     }
 
+    private void StartRecording()
+    {
+        try
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = "MP4 Video (*.mp4)|*.mp4|AVI Video (*.avi)|*.avi|All files (*.*)|*.*",
+                DefaultExt = "mp4",
+                FileName = $"gameoflife_{DateTime.Now:yyyyMMdd_HHmmss}.mp4",
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                // Initialize video recorder
+                _videoRecorder = new VideoRecorder();
+
+                // Start recording with appropriate dimensions
+                // We'll capture at a reasonable resolution
+                int videoWidth = 1920;
+                int videoHeight = 1080;
+
+                _videoRecorder.StartRecording(dialog.FileName, videoWidth, videoHeight, framerate: 30);
+                IsRecording = true;
+
+                MessageBox.Show(
+                    "Recording started! The video will capture the game grid.\nNote: To capture frames, you need to integrate the capture method with your grid rendering.",
+                    "Recording Started",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Failed to start recording: {ex.Message}\n\nMake sure FFmpeg DLLs are in the application directory.",
+                "Recording Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+            IsRecording = false;
+            _videoRecorder?.Dispose();
+            _videoRecorder = null;
+        }
+    }
+
+    private void StopRecording()
+    {
+        try
+        {
+            if (_videoRecorder != null)
+            {
+                var frameCount = _videoRecorder.FrameCount;
+                var outputPath = _videoRecorder.OutputPath;
+
+                _videoRecorder.StopRecording();
+                _videoRecorder.Dispose();
+                _videoRecorder = null;
+                IsRecording = false;
+
+                MessageBox.Show(
+                    $"Recording stopped!\n\nFrames captured: {frameCount}\nSaved to: {outputPath}",
+                    "Recording Completed",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Error stopping recording: {ex.Message}",
+                "Recording Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
+        finally
+        {
+            IsRecording = false;
+            _videoRecorder?.Dispose();
+            _videoRecorder = null;
+        }
+    }
+
+    public VideoRecorder? GetVideoRecorder() => _videoRecorder;
+
     #endregion
 
     private void Timer_Tick(object? sender, EventArgs e)
@@ -371,9 +479,9 @@ public class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(LivingCells));
         OnPropertyChanged(nameof(Engine));
         // Force trigger property changed to update the view
-        System.Windows.Application.Current?.Dispatcher.Invoke(
+        Application.Current?.Dispatcher.Invoke(
             () => { },
-            System.Windows.Threading.DispatcherPriority.Render
+            DispatcherPriority.Render
         );
     }
 
