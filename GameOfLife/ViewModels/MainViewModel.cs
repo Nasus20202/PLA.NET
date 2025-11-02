@@ -29,6 +29,11 @@ public class MainViewModel : ViewModelBase
     private int _refreshTrigger;
     private VideoRecorder? _videoRecorder;
     private bool _isRecording;
+    private string _selectedPattern = "";
+    private string _selectedColoringModel = "Standard";
+    private int _patternX = 0;
+    private int _patternY = 0;
+    private bool _patternMergeMode = true;
 
     public MainViewModel()
     {
@@ -45,6 +50,8 @@ public class MainViewModel : ViewModelBase
         _timer = new DispatcherTimer();
         _timer.Tick += Timer_Tick;
 
+        InitializePatterns();
+        InitializeColorings();
         InitializeCommands();
         UpdateTimerInterval();
     }
@@ -59,6 +66,9 @@ public class MainViewModel : ViewModelBase
         SaveCommand = new RelayCommand(Save);
         LoadCommand = new RelayCommand(Load, () => !IsRunning);
         ApplyRulesCommand = new RelayCommand(ApplyRules, () => !IsRunning);
+        PlacePatternCommand = new RelayCommand(PlacePattern, () => !IsRunning && !string.IsNullOrEmpty(SelectedPattern));
+        ClearPatternCommand = new RelayCommand(ClearPattern, () => !IsRunning);
+        ChangeColoringCommand = new RelayCommand(ChangeColoring, () => !IsRunning);
         ResizeGridCommand = new RelayCommand(ResizeGrid, () => !IsRunning);
         ZoomInCommand = new RelayCommand(ZoomIn);
         ZoomOutCommand = new RelayCommand(ZoomOut);
@@ -159,6 +169,42 @@ public class MainViewModel : ViewModelBase
         }
     }
 
+    public ObservableCollection<string> AvailablePatterns { get; } =
+        new();
+
+    public ObservableCollection<string> AvailableColorings { get; } =
+        new();
+
+    public string SelectedPattern
+    {
+        get => _selectedPattern;
+        set => SetProperty(ref _selectedPattern, value);
+    }
+
+    public string SelectedColoringModel
+    {
+        get => _selectedColoringModel;
+        set => SetProperty(ref _selectedColoringModel, value);
+    }
+
+    public int PatternX
+    {
+        get => _patternX;
+        set => SetProperty(ref _patternX, value);
+    }
+
+    public int PatternY
+    {
+        get => _patternY;
+        set => SetProperty(ref _patternY, value);
+    }
+
+    public bool PatternMergeMode
+    {
+        get => _patternMergeMode;
+        set => SetProperty(ref _patternMergeMode, value);
+    }
+
     public ObservableCollection<string> AvailableShapes { get; } =
         new() { "Rectangle", "Ellipse", "RoundedRectangle" };
 
@@ -188,6 +234,9 @@ public class MainViewModel : ViewModelBase
     public ICommand ZoomOutCommand { get; private set; } = null!;
     public ICommand StartRecordingCommand { get; private set; } = null!;
     public ICommand StopRecordingCommand { get; private set; } = null!;
+    public ICommand PlacePatternCommand { get; private set; } = null!;
+    public ICommand ClearPatternCommand { get; private set; } = null!;
+    public ICommand ChangeColoringCommand { get; private set; } = null!;
 
     #endregion
 
@@ -493,5 +542,72 @@ public class MainViewModel : ViewModelBase
             OnPropertyChanged(nameof(Engine));
             OnPropertyChanged(nameof(LivingCells));
         }
+    }
+
+    private void PlacePattern()
+    {
+        if (string.IsNullOrEmpty(SelectedPattern))
+        {
+            MessageBox.Show("Please select a pattern first", "No Pattern Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var patterns = PresetPatterns.GetAllPatterns();
+        if (!patterns.ContainsKey(SelectedPattern))
+        {
+            MessageBox.Show($"Pattern '{SelectedPattern}' not found", "Pattern Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        try
+        {
+            var pattern = patterns[SelectedPattern];
+            _engine.PlacePattern(pattern, PatternX, PatternY, PatternMergeMode);
+            NotifyStatisticsChanged();
+            RefreshTrigger++;
+            MessageBox.Show($"Pattern '{SelectedPattern}' placed at ({PatternX}, {PatternY})", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error placing pattern: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ClearPattern()
+    {
+        _engine.Clear();
+        NotifyStatisticsChanged();
+        RefreshTrigger++;
+    }
+
+    private void ChangeColoring()
+    {
+        // This is a placeholder for future implementation of dynamic coloring
+        // For now, the coloring model is used in the GameGrid control
+        MessageBox.Show($"Coloring model changed to: {SelectedColoringModel}", "Coloring Changed", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+    public void InitializePatterns()
+    {
+        var patterns = PresetPatterns.GetAllPatterns();
+        AvailablePatterns.Clear();
+        foreach (var patternName in patterns.Keys)
+        {
+            AvailablePatterns.Add(patternName);
+        }
+        if (AvailablePatterns.Count > 0)
+            SelectedPattern = AvailablePatterns[0];
+    }
+
+    public void InitializeColorings()
+    {
+        var colorings = ColoringModelFactory.GetAvailableColorings();
+        AvailableColorings.Clear();
+        foreach (var coloring in colorings)
+        {
+            AvailableColorings.Add(coloring);
+        }
+        if (AvailableColorings.Count > 0)
+            SelectedColoringModel = AvailableColorings[0];
     }
 }

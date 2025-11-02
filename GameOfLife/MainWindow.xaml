@@ -770,6 +770,134 @@
               />
             </StackPanel>
           </Border>
+          <!-- Pattern Placement -->
+          <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
+            <StackPanel>
+              <TextBlock
+                Text="Preset Patterns"
+                FontWeight="Bold"
+                Foreground="White"
+                Margin="0,0,0,10"
+              />
+              <TextBlock
+                Text="Select pattern:"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="0,0,0,5"
+              />
+              <ComboBox
+                ItemsSource="{Binding AvailablePatterns}"
+                SelectedItem="{Binding SelectedPattern}"
+                Style="{StaticResource DarkComboBoxStyle}"
+                ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}"
+              />
+              <TextBlock
+                Text="Position X:"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="0,10,0,5"
+              />
+              <TextBox
+                Text="{Binding PatternX}"
+                Style="{StaticResource ModernTextBoxStyle}"
+              />
+              <TextBlock
+                Text="Position Y:"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="0,10,0,5"
+              />
+              <TextBox
+                Text="{Binding PatternY}"
+                Style="{StaticResource ModernTextBoxStyle}"
+              />
+              <CheckBox
+                Content="Merge Mode (preserve existing)"
+                IsChecked="{Binding PatternMergeMode}"
+                Foreground="White"
+                Margin="0,10,0,5"
+              />
+              <Button
+                Content="📍 Place Pattern"
+                Command="{Binding PlacePatternCommand}"
+                Style="{StaticResource PrimaryButtonStyle}"
+                Margin="0,10,0,0"
+              />
+            </StackPanel>
+          </Border>
+          <!-- Coloring Models -->
+          <Border Style="{StaticResource PanelStyle}" Margin="0,0,0,15">
+            <StackPanel>
+              <TextBlock
+                Text="Coloring Models"
+                FontWeight="Bold"
+                Foreground="White"
+                Margin="0,0,0,10"
+              />
+              <TextBlock
+                Text="Color scheme:"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="0,0,0,5"
+              />
+              <ComboBox
+                ItemsSource="{Binding AvailableColorings}"
+                SelectedItem="{Binding SelectedColoringModel}"
+                Style="{StaticResource DarkComboBoxStyle}"
+                ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}"
+              />
+              <TextBlock
+                Text="Available:"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="0,10,0,5"
+                FontSize="11"
+              />
+              <TextBlock
+                Text="• Standard - Black &amp; white"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="5,2,0,2"
+                FontSize="11"
+                Foreground="#FFAAAAAA"
+              />
+              <TextBlock
+                Text="• Immigration - Color by origin"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="5,2,0,2"
+                FontSize="11"
+                Foreground="#FFAAAAAA"
+              />
+              <TextBlock
+                Text="• QuadLife - Four colors"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="5,2,0,2"
+                FontSize="11"
+                Foreground="#FFAAAAAA"
+              />
+              <TextBlock
+                Text="• Age-Based - Younger = brighter"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="5,2,0,2"
+                FontSize="11"
+                Foreground="#FFAAAAAA"
+              />
+              <TextBlock
+                Text="• Entropy - Color by neighbors"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="5,2,0,2"
+                FontSize="11"
+                Foreground="#FFAAAAAA"
+              />
+              <TextBlock
+                Text="• Rainbow - Position-based colors"
+                Style="{StaticResource ModernLabelStyle}"
+                Margin="5,2,0,5"
+                FontSize="11"
+                Foreground="#FFAAAAAA"
+              />
+              <Button
+                Content="🎨 Apply Coloring"
+                Command="{Binding ChangeColoringCommand}"
+                Style="{StaticResource ModernButtonStyle}"
+                Margin="0,10,0,0"
+              />
+            </StackPanel>
+          </Border>
           <!-- Statistics with Animation -->
           <Border Style="{StaticResource PanelStyle}">
             <StackPanel>

@@ -158,4 +158,45 @@ public class GameOfLifeEngine
 
         Array.Copy(state, _currentState, state.Length);
     }
+
+    /// <summary>
+    /// Place a preset pattern at a specific position on the grid
+    /// </summary>
+    public void PlacePattern(PresetPatterns pattern, int startX, int startY, bool merge = false)
+    {
+        if (pattern == null)
+            return;
+
+        for (int py = 0; py < pattern.Height; py++)
+        {
+            for (int px = 0; px < pattern.Width; px++)
+            {
+                int gridX = startX + px;
+                int gridY = startY + py;
+
+                if (gridX >= 0 && gridX < Width && gridY >= 0 && gridY < Height)
+                {
+                    bool patternCell = pattern.Pattern[px, py];
+                    if (merge)
+                    {
+                        // OR operation - preserve existing cells
+                        _currentState[gridX, gridY] = _currentState[gridX, gridY] || patternCell;
+                    }
+                    else
+                    {
+                        // Replace mode
+                        _currentState[gridX, gridY] = patternCell;
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Get the number of neighbors for a specific cell
+    /// </summary>
+    public int GetNeighborCount(int x, int y)
+    {
+        return CountNeighbors(x, y);
+    }
 }
