@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using GameOfLife.Models;
+using GameOfLife.Models.Coloring;
 using GameOfLife.ViewModels;
 
 namespace GameOfLife.Controls;
@@ -59,6 +60,13 @@ public class GameGrid : FrameworkElement
         new PropertyMetadata(0, OnRefreshTriggerChanged)
     );
 
+    public static readonly DependencyProperty ColoringModelProperty = DependencyProperty.Register(
+        nameof(ColoringModel),
+        typeof(IColoringModel),
+        typeof(GameGrid),
+        new PropertyMetadata(null, OnColoringModelChanged)
+    );
+
     public GameOfLifeEngine? Engine
     {
         get => (GameOfLifeEngine?)GetValue(EngineProperty);
@@ -87,6 +95,12 @@ public class GameGrid : FrameworkElement
     {
         get => (int)GetValue(RefreshTriggerProperty);
         set => SetValue(RefreshTriggerProperty, value);
+    }
+
+    public IColoringModel? ColoringModel
+    {
+        get => (IColoringModel?)GetValue(ColoringModelProperty);
+        set => SetValue(ColoringModelProperty, value);
     }
 
     public GameGrid()
@@ -194,6 +208,17 @@ public class GameGrid : FrameworkElement
     }
 
     private static void OnRefreshTriggerChanged(
+        DependencyObject d,
+        DependencyPropertyChangedEventArgs e
+    )
+    {
+        if (d is GameGrid grid)
+        {
+            grid._forceRender = true;
+        }
+    }
+
+    private static void OnColoringModelChanged(
         DependencyObject d,
         DependencyPropertyChangedEventArgs e
     )
@@ -326,8 +351,11 @@ public class GameGrid : FrameworkElement
             (int)(visibleBounds.Bottom / BaseCellSize) + margin + 1
         );
 
-        // Batch rendering - collect all rectangles and draw them together
-        if (CellShape == "Rectangle")
+        // Determine if we should use ColoringModel (only if it's not Standard coloring)
+        bool useColoringModel = ColoringModel != null && ColoringModel.Name != "Standard";
+
+        // Batch rendering for single-color cells (Rectangle shape with CellColor and no special coloring)
+        if (CellShape == "Rectangle" && !useColoringModel)
         {
             var geometry = new GeometryGroup();
             for (int x = startX; x < endX; x++)
@@ -350,22 +378,35 @@ public class GameGrid : FrameworkElement
         }
         else
         {
-            // For non-standard shapes, draw individually
+            // For color-varying cells or non-standard shapes, draw individually
             for (int x = startX; x < endX; x++)
             {
                 for (int y = startY; y < endY; y++)
                 {
                     if (_engine.GetCell(x, y))
                     {
-                        DrawCell(dc, x, y);
+                        Brush cellBrush;
+                        if (useColoringModel && ColoringModel != null)
+                        {
+                            int neighbors = _engine.GetNeighborCount(x, y);
+                            var color = ColoringModel.GetCellColor(x, y, true, 0, neighbors);
+                            cellBrush = new SolidColorBrush(color);
+                        }
+                        else
+                        {
+                            cellBrush = CellColor;
+                        }
+
+                        DrawCell(dc, x, y, cellBrush);
                     }
                 }
             }
         }
     }
 
-    private void DrawCell(DrawingContext dc, int x, int y)
+    private void DrawCell(DrawingContext dc, int x, int y, Brush? cellBrush = null)
     {
+        cellBrush ??= CellColor;
         double posX = x * BaseCellSize;
         double posY = y * BaseCellSize;
         double size = BaseCellSize - 0.5;
@@ -375,15 +416,15 @@ public class GameGrid : FrameworkElement
             double centerX = posX + size / 2;
             double centerY = posY + size / 2;
             double radius = size / 2;
-            dc.DrawEllipse(CellColor, null, new Point(centerX, centerY), radius, radius);
+            dc.DrawEllipse(cellBrush, null, new Point(centerX, centerY), radius, radius);
         }
         else if (CellShape == "RoundedRectangle")
         {
-            dc.DrawRoundedRectangle(CellColor, null, new Rect(posX, posY, size, size), 2, 2);
+            dc.DrawRoundedRectangle(cellBrush, null, new Rect(posX, posY, size, size), 2, 2);
         }
         else
         {
-            dc.DrawRectangle(CellColor, null, new Rect(posX, posY, size, size));
+            dc.DrawRectangle(cellBrush, null, new Rect(posX, posY, size, size));
         }
     }
 

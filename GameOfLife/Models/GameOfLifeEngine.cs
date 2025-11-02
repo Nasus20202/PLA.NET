@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using GameOfLife.Models.Coloring;
 
 namespace GameOfLife.Models;
 
@@ -77,10 +78,12 @@ public class GameOfLifeEngine
         DeadCells = 0;
     }
 
-    public void NextGeneration()
+    public void NextGeneration(IColoringModel? coloringModel = null)
     {
         long born = 0;
         long died = 0;
+        var newBornCells = new List<(int x, int y)>();
+        var deadCells = new List<(int x, int y)>();
 
         for (int x = 0; x < Width; x++)
         {
@@ -93,10 +96,28 @@ public class GameOfLifeEngine
                 _nextState[x, y] = nextAlive;
 
                 if (!currentlyAlive && nextAlive)
+                {
                     born++;
+                    newBornCells.Add((x, y));
+                }
                 else if (currentlyAlive && !nextAlive)
+                {
                     died++;
+                    deadCells.Add((x, y));
+                }
             }
+        }
+
+        // Notify coloring model about newly born cells before state swap
+        if (coloringModel != null && newBornCells.Count > 0)
+        {
+            coloringModel.OnCellsBorn(newBornCells, _currentState);
+        }
+
+        // Notify coloring model about dead cells
+        if (coloringModel != null && deadCells.Count > 0)
+        {
+            coloringModel.OnCellsDead(deadCells);
         }
 
         // Swap states

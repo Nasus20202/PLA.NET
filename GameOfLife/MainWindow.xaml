@@ -517,6 +517,7 @@
             CellShape="{Binding CellShape}"
             ZoomLevel="{Binding ZoomLevel}"
             RefreshTrigger="{Binding RefreshTrigger}"
+            ColoringModel="{Binding CurrentColoringModel}"
           />
         </ScrollViewer>
       </Grid>

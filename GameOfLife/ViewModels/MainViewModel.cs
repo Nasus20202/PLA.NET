@@ -1,10 +1,11 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using GameOfLife.Models;
+using GameOfLife.Models.Coloring;
 using GameOfLife.Services;
 using Microsoft.Win32;
 
@@ -34,6 +35,7 @@ public class MainViewModel : ViewModelBase
     private int _patternX = 0;
     private int _patternY = 0;
     private bool _patternMergeMode = true;
+    private IColoringModel? _currentColoringModel;
 
     public MainViewModel()
     {
@@ -52,6 +54,7 @@ public class MainViewModel : ViewModelBase
 
         InitializePatterns();
         InitializeColorings();
+        InitializeDefaultColoring();
         InitializeCommands();
         UpdateTimerInterval();
     }
@@ -205,6 +208,12 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _patternMergeMode, value);
     }
 
+    public IColoringModel? CurrentColoringModel
+    {
+        get => _currentColoringModel;
+        private set => SetProperty(ref _currentColoringModel, value);
+    }
+
     public ObservableCollection<string> AvailableShapes { get; } =
         new() { "Rectangle", "Ellipse", "RoundedRectangle" };
 
@@ -258,13 +267,27 @@ public class MainViewModel : ViewModelBase
     private void Step()
     {
         ApplyRules();
-        _engine.NextGeneration();
+        _engine.NextGeneration(CurrentColoringModel);
+
+        // Update coloring model state (e.g., age increments)
+        if (CurrentColoringModel != null)
+        {
+            CurrentColoringModel.NextGeneration();
+        }
+
         NotifyStatisticsChanged();
     }
 
     private void Clear()
     {
         _engine.Clear();
+
+        // Clear coloring model state as well
+        if (CurrentColoringModel != null)
+        {
+            CurrentColoringModel.Clear();
+        }
+
         NotifyStatisticsChanged();
         // Wymuś natychmiastowe odświeżenie widoku
         RefreshTrigger++;
@@ -273,6 +296,13 @@ public class MainViewModel : ViewModelBase
     private void Randomize()
     {
         _engine.Randomize(0.3);
+
+        // Initialize colors for the randomized grid if using a coloring model that tracks state
+        if (CurrentColoringModel != null)
+        {
+            CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
+        }
+
         NotifyStatisticsChanged();
         // Wymuś natychmiastowe odświeżenie widoku
         RefreshTrigger++;
@@ -441,23 +471,11 @@ public class MainViewModel : ViewModelBase
 
                 _videoRecorder.StartRecording(dialog.FileName, videoWidth, videoHeight, framerate: 30);
                 IsRecording = true;
-
-                MessageBox.Show(
-                    "Recording started! The video will capture the game grid.\nNote: To capture frames, you need to integrate the capture method with your grid rendering.",
-                    "Recording Started",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
             }
         }
-        catch (Exception ex)
+        catch
         {
-            MessageBox.Show(
-                $"Failed to start recording: {ex.Message}\n\nMake sure FFmpeg DLLs are in the application directory.",
-                "Recording Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error
-            );
+            // Silently handle errors
             IsRecording = false;
             _videoRecorder?.Dispose();
             _videoRecorder = null;
@@ -470,30 +488,15 @@ public class MainViewModel : ViewModelBase
         {
             if (_videoRecorder != null)
             {
-                var frameCount = _videoRecorder.FrameCount;
-                var outputPath = _videoRecorder.OutputPath;
-
                 _videoRecorder.StopRecording();
                 _videoRecorder.Dispose();
                 _videoRecorder = null;
                 IsRecording = false;
-
-                MessageBox.Show(
-                    $"Recording stopped!\n\nFrames captured: {frameCount}\nSaved to: {outputPath}",
-                    "Recording Completed",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
             }
         }
-        catch (Exception ex)
+        catch
         {
-            MessageBox.Show(
-                $"Error stopping recording: {ex.Message}",
-                "Recording Error",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error
-            );
+            // Silently handle errors
         }
         finally
         {
@@ -509,7 +512,14 @@ public class MainViewModel : ViewModelBase
 
     private void Timer_Tick(object? sender, EventArgs e)
     {
-        _engine.NextGeneration();
+        _engine.NextGeneration(CurrentColoringModel);
+
+        // Update coloring model state (e.g., age increments)
+        if (CurrentColoringModel != null)
+        {
+            CurrentColoringModel.NextGeneration();
+        }
+
         NotifyStatisticsChanged();
     }
 
@@ -538,7 +548,19 @@ public class MainViewModel : ViewModelBase
     {
         if (!IsRunning)
         {
+            bool wasAlive = _engine.GetCell(x, y);
             _engine.ToggleCell(x, y);
+
+            // If cell is now alive and we're using Age-Based coloring, set age to 0
+            if (!wasAlive && _engine.GetCell(x, y) && CurrentColoringModel?.Name == "Age-Based")
+            {
+                var ageBasedColoring = CurrentColoringModel as AgeBasedColoring;
+                if (ageBasedColoring != null)
+                {
+                    ageBasedColoring.SetCellAge(x, y, 0);
+                }
+            }
+
             OnPropertyChanged(nameof(Engine));
             OnPropertyChanged(nameof(LivingCells));
         }
@@ -548,14 +570,12 @@ public class MainViewModel : ViewModelBase
     {
         if (string.IsNullOrEmpty(SelectedPattern))
         {
-            MessageBox.Show("Please select a pattern first", "No Pattern Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         var patterns = PresetPatterns.GetAllPatterns();
         if (!patterns.ContainsKey(SelectedPattern))
         {
-            MessageBox.Show($"Pattern '{SelectedPattern}' not found", "Pattern Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
@@ -565,11 +585,10 @@ public class MainViewModel : ViewModelBase
             _engine.PlacePattern(pattern, PatternX, PatternY, PatternMergeMode);
             NotifyStatisticsChanged();
             RefreshTrigger++;
-            MessageBox.Show($"Pattern '{SelectedPattern}' placed at ({PatternX}, {PatternY})", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-        catch (Exception ex)
+        catch
         {
-            MessageBox.Show($"Error placing pattern: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            // Silently handle errors
         }
     }
 
@@ -582,9 +601,21 @@ public class MainViewModel : ViewModelBase
 
     private void ChangeColoring()
     {
-        // This is a placeholder for future implementation of dynamic coloring
-        // For now, the coloring model is used in the GameGrid control
-        MessageBox.Show($"Coloring model changed to: {SelectedColoringModel}", "Coloring Changed", MessageBoxButton.OK, MessageBoxImage.Information);
+        try
+        {
+            // Create the appropriate coloring model based on selection
+            CurrentColoringModel = ColoringModelFactory.CreateColoring(SelectedColoringModel, _engine.Width, _engine.Height);
+
+            // Initialize colors for the current grid state
+            CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
+
+            // Force re-render to apply new coloring
+            RefreshTrigger++;
+        }
+        catch
+        {
+            // Silently handle errors
+        }
     }
 
     public void InitializePatterns()
@@ -609,5 +640,10 @@ public class MainViewModel : ViewModelBase
         }
         if (AvailableColorings.Count > 0)
             SelectedColoringModel = AvailableColorings[0];
+    }
+
+    public void InitializeDefaultColoring()
+    {
+        CurrentColoringModel = ColoringModelFactory.CreateColoring("Standard", _engine.Width, _engine.Height);
     }
 }
