@@ -5,5 +5,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FFMediaToolkit" Version="4.8.1" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
+  </ItemGroup>
+
+    <Target Name="CopyFFmpegLib" AfterTargets="Build">
+        <ItemGroup>
+            <FFmpegFiles Include="ffmpeg-lib\**\*.*" />
+        </ItemGroup>
+        
+        <Copy SourceFiles="@(FFmpegFiles)" DestinationFolder="$(OutputPath)%(RecursiveDir)" SkipUnchangedFiles="true" />
+    </Target>
 </Project>
