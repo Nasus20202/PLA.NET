@@ -26,9 +26,11 @@ public partial class MainWindow : Window
         {
             try
             {
-                // Capture the current frame from the GameGrid control
-                // Using 1920x1080 resolution (can be adjusted)
-                ViewModel.GetVideoRecorder()?.CaptureFrame(GameGridControl, 1920, 1080);
+                // Capture the current frame from the GameGrid control using actual dimensions
+                int width = ViewModel.VideoWidth;
+                int height = ViewModel.VideoHeight;
+
+                ViewModel.GetVideoRecorder()?.CaptureFrame(GameGridControl, width, height);
             }
             catch (System.Exception ex)
             {

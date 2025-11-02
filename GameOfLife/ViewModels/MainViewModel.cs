@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Windows;
@@ -36,6 +36,8 @@ public class MainViewModel : ViewModelBase
     private int _patternY = 0;
     private bool _patternMergeMode = true;
     private IColoringModel? _currentColoringModel;
+    private int _videoWidth;
+    private int _videoHeight;
 
     public MainViewModel()
     {
@@ -220,6 +222,9 @@ public class MainViewModel : ViewModelBase
     public string StatusText => IsRunning ? "Running" : "Editing";
 
     public string RecordingStatusText => IsRecording ? "● Recording" : "Not Recording";
+
+    public int VideoWidth => _videoWidth;
+    public int VideoHeight => _videoHeight;
 
     public long Generation => _engine.Generation;
     public long BornCells => _engine.BornCells;
@@ -464,12 +469,16 @@ public class MainViewModel : ViewModelBase
                 // Initialize video recorder
                 _videoRecorder = new VideoRecorder();
 
-                // Start recording with appropriate dimensions
-                // We'll capture at a reasonable resolution
-                int videoWidth = 1920;
-                int videoHeight = 1080;
+                // Record at a standard resolution - will capture the visible area
+                // The actual grid will be rendered at whatever zoom level is currently set
+                _videoWidth = 1920;
+                _videoHeight = 1080;
 
-                _videoRecorder.StartRecording(dialog.FileName, videoWidth, videoHeight, framerate: 30);
+                // Make dimensions even (required by most video codecs)
+                if (_videoWidth % 2 != 0) _videoWidth++;
+                if (_videoHeight % 2 != 0) _videoHeight++;
+
+                _videoRecorder.StartRecording(dialog.FileName, _videoWidth, _videoHeight, framerate: 30);
                 IsRecording = true;
             }
         }
