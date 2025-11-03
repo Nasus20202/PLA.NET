@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
@@ -13,14 +10,15 @@ public class QuadLifeColoring : IColoringModel
     private Dictionary<(int, int), Color> _cellColors = new();
     private Color[] _quadColors = new[]
     {
-        Color.FromRgb(255, 0, 0),   // Red
+        Color.FromRgb(255, 0, 0), // Red
         Color.FromRgb(255, 255, 0), // Yellow
-        Color.FromRgb(0, 255, 0),   // Green
-        Color.FromRgb(0, 0, 255)    // Blue
+        Color.FromRgb(0, 255, 0), // Green
+        Color.FromRgb(0, 0, 255), // Blue
     };
 
     public string Name => "QuadLife";
-    public string Description => "Four different colors - nowy kolor na podstawie większości sąsiadów";
+    public string Description =>
+        "Four different colors - nowy kolor na podstawie większości sąsiadów";
 
     public Color GetCellColor(int x, int y, bool isAlive, int age, int neighbors)
     {
@@ -79,7 +77,9 @@ public class QuadLifeColoring : IColoringModel
                     if (nx >= 0 && nx < width && ny >= 0 && ny < height && currentState[nx, ny])
                     {
                         var key = (nx, ny);
-                        Color neighborColor = _cellColors.ContainsKey(key) ? _cellColors[key] : _quadColors[0];
+                        Color neighborColor = _cellColors.ContainsKey(key)
+                            ? _cellColors[key]
+                            : _quadColors[0];
 
                         if (!colorCounts.ContainsKey(neighborColor))
                             colorCounts[neighborColor] = 0;
@@ -129,7 +129,4 @@ public class QuadLifeColoring : IColoringModel
     {
         _cellColors.Clear();
     }
-
-    public Color[] GetQuadColors() => _quadColors;
 }
-

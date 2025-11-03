@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
@@ -42,4 +40,3 @@ public interface IColoringModel
     /// </summary>
     void Clear();
 }
-

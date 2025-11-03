@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
@@ -11,14 +8,11 @@ namespace GameOfLife.Models.Coloring;
 public class ImmigrationColoring : IColoringModel
 {
     private Dictionary<(int, int), Color> _cellColors = new();
-    private Color[] _colors = new[]
-    {
-        Colors.Red,
-        Colors.Yellow,
-    };
+    private Color[] _colors = new[] { Colors.Red, Colors.Yellow };
 
     public string Name => "Immigration";
-    public string Description => "Cells get different colors based on which neighbor caused them to be born";
+    public string Description =>
+        "Cells get different colors based on which neighbor caused them to be born";
 
     public Color GetCellColor(int x, int y, bool isAlive, int age, int neighbors)
     {
@@ -77,7 +71,9 @@ public class ImmigrationColoring : IColoringModel
                     if (nx >= 0 && nx < width && ny >= 0 && ny < height && currentState[nx, ny])
                     {
                         var key = (nx, ny);
-                        Color neighborColor = _cellColors.ContainsKey(key) ? _cellColors[key] : _colors[0];
+                        Color neighborColor = _cellColors.ContainsKey(key)
+                            ? _cellColors[key]
+                            : _colors[0];
 
                         if (!colorCounts.ContainsKey(neighborColor))
                             colorCounts[neighborColor] = 0;
@@ -107,17 +103,8 @@ public class ImmigrationColoring : IColoringModel
         _cellColors[(x, y)] = color;
     }
 
-    public Color GetAssignedColor(int x, int y)
-    {
-        var key = (x, y);
-        return _cellColors.ContainsKey(key) ? _cellColors[key] : Colors.White;
-    }
-
     public void Clear()
     {
         _cellColors.Clear();
     }
-
-    public Color[] GetAvailableColors() => _colors;
 }
-

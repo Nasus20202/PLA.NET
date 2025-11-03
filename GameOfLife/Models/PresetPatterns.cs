@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace GameOfLife.Models;
+﻿namespace GameOfLife.Models;
 
 /// <summary>
 /// Preset patterns for Game of Life (from Wikipedia and other sources)
@@ -46,9 +43,9 @@ public class PresetPatterns
 
         // Spaceships
         patterns["Glider"] = CreateGlider();
-        patterns["LWSS"] = CreateLWSS();
-        patterns["MWSS"] = CreateMWSS();
-        patterns["HWSS"] = CreateHWSS();
+        patterns["LWSS"] = CreateLwss();
+        patterns["MWSS"] = CreateMwss();
+        patterns["HWSS"] = CreateHwss();
 
         // Methuselahs
         patterns["Acorn"] = CreateAcorn();
@@ -61,52 +58,52 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBlock()
     {
-        bool[,] pattern = new bool[2, 2]
+        bool[,] pattern = new[,]
         {
             { true, true },
-            { true, true }
+            { true, true },
         };
         return new PresetPatterns("Block", "Simplest still life (2x2 square)", pattern);
     }
 
     private static PresetPatterns CreateBeehive()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false },
-            { true, false, true }
+            { true, false, true },
         };
         return new PresetPatterns("Beehive", "Common still life", pattern);
     }
 
     private static PresetPatterns CreateLoaf()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
-            { false, true, false }
+            { false, true, false },
         };
         return new PresetPatterns("Loaf", "Still life pattern", pattern);
     }
 
     private static PresetPatterns CreateBoat()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { true, true, false },
-            { true, false, true }
+            { true, false, true },
         };
         return new PresetPatterns("Boat", "Still life pattern", pattern);
     }
 
     private static PresetPatterns CreateTub()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
-            { false, true, false }
+            { false, true, false },
         };
         return new PresetPatterns("Tub", "Still life pattern", pattern);
     }
@@ -117,57 +114,183 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBlinker()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
-            { true, true, true }
+            { true, true, true },
         };
         return new PresetPatterns("Blinker", "Period 2 oscillator (simplest)", pattern);
     }
 
     private static PresetPatterns CreateBeacon()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { true, true },
-            { false, false }
+            { false, false },
         };
         return new PresetPatterns("Beacon", "Period 2 oscillator", pattern);
     }
 
     private static PresetPatterns CreateToad()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, true, true },
-            { true, true, true, false }
+            { true, true, true, false },
         };
         return new PresetPatterns("Toad", "Period 2 oscillator", pattern);
     }
 
     private static PresetPatterns CreatePulsar()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, false, true, true, true, false, false, false, true, true, true, false, false },
-            { false, false, false, false, false, false, false, false, false, false, false, false, false },
-            { true, false, false, false, true, false, false, false, true, false, false, false, true },
-            { true, false, false, false, true, false, false, false, true, false, false, false, true },
-            { true, false, false, false, true, false, false, false, true, false, false, false, true },
+            {
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            },
+            {
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+            },
+            {
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+            },
+            {
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+            },
             { false, false, true, true, true, false, false, false, true, true, true, false, false },
-            { false, false, false, false, false, false, false, false, false, false, false, false, false },
+            {
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            },
             { false, false, true, true, true, false, false, false, true, true, true, false, false },
-            { true, false, false, false, true, false, false, false, true, false, false, false, true },
-            { true, false, false, false, true, false, false, false, true, false, false, false, true },
-            { true, false, false, false, true, false, false, false, true, false, false, false, true },
-            { false, false, false, false, false, false, false, false, false, false, false, false, false },
-            { false, false, true, true, true, false, false, false, true, true, true, false, false }
+            {
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+            },
+            {
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+            },
+            {
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+                false,
+                false,
+                false,
+                true,
+            },
+            {
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            },
+            { false, false, true, true, true, false, false, false, true, true, true, false, false },
         };
         return new PresetPatterns("Pulsar", "Period 3 oscillator", pattern);
     }
 
     private static PresetPatterns CreatePentDecathlon()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
@@ -176,7 +299,7 @@ public class PresetPatterns
             { false, true, false },
             { false, true, false },
             { true, false, true },
-            { false, true, false }
+            { false, true, false },
         };
         return new PresetPatterns("Pent-decathlon", "Period 15 oscillator", pattern);
     }
@@ -187,47 +310,51 @@ public class PresetPatterns
 
     private static PresetPatterns CreateGlider()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false },
             { false, false, true },
-            { true, true, true }
+            { true, true, true },
         };
-        return new PresetPatterns("Glider", "Smallest spaceship (period 4, moves diagonally)", pattern);
+        return new PresetPatterns(
+            "Glider",
+            "Smallest spaceship (period 4, moves diagonally)",
+            pattern
+        );
     }
 
-    private static PresetPatterns CreateLWSS()
+    private static PresetPatterns CreateLwss()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { true, false, false, true, false },
             { false, false, false, false, true },
             { true, false, false, false, true },
-            { false, true, true, true, true }
+            { false, true, true, true, true },
         };
         return new PresetPatterns("LWSS", "Lightweight spaceship (moves horizontally)", pattern);
     }
 
-    private static PresetPatterns CreateMWSS()
+    private static PresetPatterns CreateMwss()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false, false, true, false },
             { true, false, false, false, false, true },
             { true, false, false, false, false, true },
-            { true, true, true, true, true, false }
+            { true, true, true, true, true, false },
         };
         return new PresetPatterns("MWSS", "Middleweight spaceship (moves horizontally)", pattern);
     }
 
-    private static PresetPatterns CreateHWSS()
+    private static PresetPatterns CreateHwss()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false, false, false, true, false },
             { true, false, false, false, false, false, true },
             { true, false, false, false, false, false, true },
-            { true, true, true, true, true, true, false }
+            { true, true, true, true, true, true, false },
         };
         return new PresetPatterns("HWSS", "Heavyweight spaceship (moves horizontally)", pattern);
     }
@@ -238,25 +365,24 @@ public class PresetPatterns
 
     private static PresetPatterns CreateAcorn()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, false, false, false, false, false },
-            { true, false, true, true, false, true, true }
+            { true, false, true, true, false, true, true },
         };
         return new PresetPatterns("Acorn", "Methuselah (5206 generations)", pattern);
     }
 
     private static PresetPatterns CreateRPentomino()
     {
-        bool[,] pattern = new bool[,]
+        bool[,] pattern = new[,]
         {
             { false, true, true },
             { true, true, false },
-            { false, true, false }
+            { false, true, false },
         };
         return new PresetPatterns("R-pentomino", "Methuselah (thousands of generations)", pattern);
     }
 
     #endregion
 }
-

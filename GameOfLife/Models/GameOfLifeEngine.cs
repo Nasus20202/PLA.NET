@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using GameOfLife.Models.Coloring;
-
-namespace GameOfLife.Models;
+﻿namespace GameOfLife.Models;
 
 /// <summary>
 /// Core engine for Conway's Game of Life with configurable rules
@@ -185,9 +180,6 @@ public class GameOfLifeEngine
     /// </summary>
     public void PlacePattern(PresetPatterns pattern, int startX, int startY, bool merge = false)
     {
-        if (pattern == null)
-            return;
-
         for (int py = 0; py < pattern.Height; py++)
         {
             for (int px = 0; px < pattern.Width; px++)

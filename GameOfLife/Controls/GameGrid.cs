@@ -1,9 +1,7 @@
-﻿using System;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using GameOfLife.Models;
-using GameOfLife.Models.Coloring;
 using GameOfLife.ViewModels;
 
 namespace GameOfLife.Controls;
@@ -17,7 +15,6 @@ public class GameGrid : FrameworkElement
     private GameOfLifeEngine? _engine;
     private MainViewModel? _viewModel;
     private const double BaseCellSize = 10; // Fixed base cell size
-    private bool[,]? _previousState;
     private long _lastGeneration = -1;
     private DrawingVisual? _backgroundVisual;
     private DrawingVisual? _cellsVisual;
@@ -298,7 +295,6 @@ public class GameGrid : FrameworkElement
         if (_engine == null || _cellsVisual == null || _backgroundVisual == null)
             return;
 
-        _previousState = null;
         _lastGeneration = -1;
 
         // Update dimensions
@@ -327,9 +323,6 @@ public class GameGrid : FrameworkElement
         {
             // Background is on a separate layer, just draw the cells
             RenderVisibleCells(dc);
-
-            // Update cache
-            _previousState = _engine.GetStateCopy();
         }
     }
 

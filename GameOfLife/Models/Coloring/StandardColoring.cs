@@ -25,4 +25,3 @@ public class StandardColoring : IColoringModel
 
     public void Clear() { }
 }
-

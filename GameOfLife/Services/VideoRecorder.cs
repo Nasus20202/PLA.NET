@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Windows;
+﻿using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using FFMediaToolkit;
@@ -24,7 +22,8 @@ public class VideoRecorder : IDisposable
     public bool IsRecording => _isRecording;
     public string? OutputPath => _outputPath;
     public int FrameCount => _frameCount;
-    public TimeSpan RecordingDuration => _isRecording ? DateTime.Now - _recordingStartTime : TimeSpan.Zero;
+    public TimeSpan RecordingDuration =>
+        _isRecording ? DateTime.Now - _recordingStartTime : TimeSpan.Zero;
 
     static VideoRecorder()
     {
@@ -65,7 +64,10 @@ public class VideoRecorder : IDisposable
             _encoderSettings.CRF = 17; // Quality (lower = better quality, range: 0-51)
 
             // Create media output
-            _mediaOutput = MediaBuilder.CreateContainer(outputPath).WithVideo(_encoderSettings).Create();
+            _mediaOutput = MediaBuilder
+                .CreateContainer(outputPath)
+                .WithVideo(_encoderSettings)
+                .Create();
 
             _isRecording = true;
         }
@@ -109,8 +111,11 @@ public class VideoRecorder : IDisposable
 
             // Create ImageData manually from bitmap
             var rect = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            var bitmapData = bitmap.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var bitmapData = bitmap.LockBits(
+                rect,
+                System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                System.Drawing.Imaging.PixelFormat.Format32bppArgb
+            );
 
             try
             {
@@ -144,7 +149,12 @@ public class VideoRecorder : IDisposable
                 }
 
                 // Create ImageData from the byte array
-                var imageData = new ImageData(frameData, ImagePixelFormat.Bgra32, videoWidth, videoHeight);
+                var imageData = new ImageData(
+                    frameData,
+                    ImagePixelFormat.Bgra32,
+                    videoWidth,
+                    videoHeight
+                );
 
                 // Write frame to video
                 _mediaOutput.Video.AddFrame(imageData);
@@ -188,4 +198,3 @@ public class VideoRecorder : IDisposable
         StopRecording();
     }
 }
-

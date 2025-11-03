@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
@@ -87,19 +84,8 @@ public class AgeBasedColoring : IColoringModel
         _cellAge[(x, y)] = age;
     }
 
-    public void IncrementAllAges()
-    {
-        var newAges = new Dictionary<(int, int), int>();
-        foreach (var kvp in _cellAge)
-        {
-            newAges[kvp.Key] = kvp.Value + 1;
-        }
-        _cellAge = newAges;
-    }
-
     public void Clear()
     {
         _cellAge.Clear();
     }
 }
-

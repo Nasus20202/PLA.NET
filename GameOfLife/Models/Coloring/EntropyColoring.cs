@@ -20,7 +20,7 @@ public class EntropyColoring : IColoringModel
         // 8 neighbors = Red (255, 0, 0)
         double ratio = neighbors / 8.0; // 0.0 to 1.0
 
-        byte red = (byte)(ratio * 255);      // 0 to 255
+        byte red = (byte)(ratio * 255); // 0 to 255
         byte green = 0;
         byte blue = (byte)((1 - ratio) * 255); // 255 to 0
 
@@ -37,4 +37,3 @@ public class EntropyColoring : IColoringModel
 
     public void Clear() { }
 }
-

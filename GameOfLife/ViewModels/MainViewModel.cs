@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.IO;
+﻿using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using GameOfLife.Models;
-using GameOfLife.Models.Coloring;
 using GameOfLife.Services;
 using Microsoft.Win32;
 
@@ -32,8 +29,8 @@ public class MainViewModel : ViewModelBase
     private bool _isRecording;
     private string _selectedPattern = "";
     private string _selectedColoringModel = "Standard";
-    private int _patternX = 0;
-    private int _patternY = 0;
+    private int _patternX;
+    private int _patternY;
     private bool _patternMergeMode = true;
     private IColoringModel? _currentColoringModel;
     private int _videoWidth;
@@ -71,7 +68,10 @@ public class MainViewModel : ViewModelBase
         SaveCommand = new RelayCommand(Save);
         LoadCommand = new RelayCommand(Load, () => !IsRunning);
         ApplyRulesCommand = new RelayCommand(ApplyRules, () => !IsRunning);
-        PlacePatternCommand = new RelayCommand(PlacePattern, () => !IsRunning && !string.IsNullOrEmpty(SelectedPattern));
+        PlacePatternCommand = new RelayCommand(
+            PlacePattern,
+            () => !IsRunning && !string.IsNullOrEmpty(SelectedPattern)
+        );
         ClearPatternCommand = new RelayCommand(ClearPattern, () => !IsRunning);
         ChangeColoringCommand = new RelayCommand(ChangeColoring, () => !IsRunning);
         ResizeGridCommand = new RelayCommand(ResizeGrid, () => !IsRunning);
@@ -174,11 +174,9 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<string> AvailablePatterns { get; } =
-        new();
+    public ObservableCollection<string> AvailablePatterns { get; } = new();
 
-    public ObservableCollection<string> AvailableColorings { get; } =
-        new();
+    public ObservableCollection<string> AvailableColorings { get; } = new();
 
     public string SelectedPattern
     {
@@ -300,7 +298,7 @@ public class MainViewModel : ViewModelBase
 
     private void Randomize()
     {
-        _engine.Randomize(0.3);
+        _engine.Randomize();
 
         // Initialize colors for the randomized grid if using a coloring model that tracks state
         if (CurrentColoringModel != null)
@@ -475,10 +473,17 @@ public class MainViewModel : ViewModelBase
                 _videoHeight = 1080;
 
                 // Make dimensions even (required by most video codecs)
-                if (_videoWidth % 2 != 0) _videoWidth++;
-                if (_videoHeight % 2 != 0) _videoHeight++;
+                if (_videoWidth % 2 != 0)
+                    _videoWidth++;
+                if (_videoHeight % 2 != 0)
+                    _videoHeight++;
 
-                _videoRecorder.StartRecording(dialog.FileName, _videoWidth, _videoHeight, framerate: 30);
+                _videoRecorder.StartRecording(
+                    dialog.FileName,
+                    _videoWidth,
+                    _videoHeight,
+                    framerate: 30
+                );
                 IsRecording = true;
             }
         }
@@ -547,10 +552,7 @@ public class MainViewModel : ViewModelBase
         OnPropertyChanged(nameof(LivingCells));
         OnPropertyChanged(nameof(Engine));
         // Force trigger property changed to update the view
-        Application.Current?.Dispatcher.Invoke(
-            () => { },
-            DispatcherPriority.Render
-        );
+        Application.Current?.Dispatcher.Invoke(() => { }, DispatcherPriority.Render);
     }
 
     public void ToggleCell(int x, int y)
@@ -613,7 +615,11 @@ public class MainViewModel : ViewModelBase
         try
         {
             // Create the appropriate coloring model based on selection
-            CurrentColoringModel = ColoringModelFactory.CreateColoring(SelectedColoringModel, _engine.Width, _engine.Height);
+            CurrentColoringModel = ColoringModelFactory.CreateColoring(
+                SelectedColoringModel,
+                _engine.Width,
+                _engine.Height
+            );
 
             // Initialize colors for the current grid state
             CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
@@ -653,6 +659,10 @@ public class MainViewModel : ViewModelBase
 
     public void InitializeDefaultColoring()
     {
-        CurrentColoringModel = ColoringModelFactory.CreateColoring("Standard", _engine.Width, _engine.Height);
+        CurrentColoringModel = ColoringModelFactory.CreateColoring(
+            "Standard",
+            _engine.Width,
+            _engine.Height
+        );
     }
 }
