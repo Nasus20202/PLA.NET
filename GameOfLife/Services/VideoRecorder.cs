@@ -1,29 +1,23 @@
-﻿using System.IO;
+﻿using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using FFMediaToolkit;
 using FFMediaToolkit.Encoding;
 using FFMediaToolkit.Graphics;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace GameOfLife.Services;
 
 /// <summary>
-/// Service for recording the game grid to video using FFMediaToolkit
+///     Service for recording the game grid to video using FFMediaToolkit
 /// </summary>
 public class VideoRecorder : IDisposable
 {
-    private MediaOutput? _mediaOutput;
     private VideoEncoderSettings? _encoderSettings;
-    private bool _isRecording;
-    private string? _outputPath;
-    private int _frameCount;
+    private MediaOutput? _mediaOutput;
     private DateTime _recordingStartTime;
-
-    public bool IsRecording => _isRecording;
-    public string? OutputPath => _outputPath;
-    public int FrameCount => _frameCount;
-    public TimeSpan RecordingDuration =>
-        _isRecording ? DateTime.Now - _recordingStartTime : TimeSpan.Zero;
 
     static VideoRecorder()
     {
@@ -32,8 +26,22 @@ public class VideoRecorder : IDisposable
         FFmpegLoader.FFmpegPath = appDirectory;
     }
 
+    public bool IsRecording { get; private set; }
+
+    public string? OutputPath { get; private set; }
+
+    public int FrameCount { get; private set; }
+
+    public TimeSpan RecordingDuration =>
+        IsRecording ? DateTime.Now - _recordingStartTime : TimeSpan.Zero;
+
+    public void Dispose()
+    {
+        StopRecording();
+    }
+
     /// <summary>
-    /// Start recording to a video file
+    ///     Start recording to a video file
     /// </summary>
     /// <param name="outputPath">Path to the output video file</param>
     /// <param name="width">Video width in pixels</param>
@@ -41,27 +49,21 @@ public class VideoRecorder : IDisposable
     /// <param name="framerate">Frames per second (default: 30)</param>
     public void StartRecording(string outputPath, int width, int height, int framerate = 30)
     {
-        if (_isRecording)
-        {
+        if (IsRecording)
             throw new InvalidOperationException("Recording is already in progress");
-        }
 
         try
         {
-            _outputPath = outputPath;
-            _frameCount = 0;
+            OutputPath = outputPath;
+            FrameCount = 0;
             _recordingStartTime = DateTime.Now;
 
             // Configure video encoder settings
-            _encoderSettings = new VideoEncoderSettings(
-                width: width,
-                height: height,
-                framerate: framerate,
-                codec: VideoCodec.H264
-            );
-
-            _encoderSettings.EncoderPreset = EncoderPreset.Fast;
-            _encoderSettings.CRF = 17; // Quality (lower = better quality, range: 0-51)
+            _encoderSettings = new VideoEncoderSettings(width, height, framerate, VideoCodec.H264)
+            {
+                EncoderPreset = EncoderPreset.Fast,
+                CRF = 17, // Quality (lower = better quality, range: 0-51)
+            };
 
             // Create media output
             _mediaOutput = MediaBuilder
@@ -69,7 +71,7 @@ public class VideoRecorder : IDisposable
                 .WithVideo(_encoderSettings)
                 .Create();
 
-            _isRecording = true;
+            IsRecording = true;
         }
         catch (Exception ex)
         {
@@ -78,14 +80,12 @@ public class VideoRecorder : IDisposable
     }
 
     /// <summary>
-    /// Capture a frame from a Visual element
+    ///     Capture a frame from a Visual element
     /// </summary>
     public unsafe void CaptureFrame(Visual visual, int width, int height)
     {
-        if (!_isRecording || _mediaOutput == null || _encoderSettings == null)
-        {
+        if (!IsRecording || _mediaOutput == null || _encoderSettings == null)
             throw new InvalidOperationException("Recording is not in progress");
-        }
 
         try
         {
@@ -107,45 +107,43 @@ public class VideoRecorder : IDisposable
             encoder.Save(memoryStream);
             memoryStream.Position = 0;
 
-            using var bitmap = new System.Drawing.Bitmap(memoryStream);
+            using var bitmap = new Bitmap(memoryStream);
 
             // Create ImageData manually from bitmap
-            var rect = new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height);
+            var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var bitmapData = bitmap.LockBits(
                 rect,
-                System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                System.Drawing.Imaging.PixelFormat.Format32bppArgb
+                ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppArgb
             );
 
             try
             {
                 // Calculate the buffer size needed
-                int videoWidth = _encoderSettings.VideoWidth;
-                int videoHeight = _encoderSettings.VideoHeight;
-                int stride = videoWidth * 4; // 4 bytes per pixel for BGRA32
+                var videoWidth = _encoderSettings.VideoWidth;
+                var videoHeight = _encoderSettings.VideoHeight;
+                var stride = videoWidth * 4; // 4 bytes per pixel for BGRA32
 
                 // Create a byte array for the frame data
-                byte[] frameData = new byte[stride * videoHeight];
+                var frameData = new byte[stride * videoHeight];
 
                 // Copy pixel data from bitmap to frame buffer
                 fixed (byte* dstBuffer = frameData)
                 {
-                    byte* srcPtr = (byte*)bitmapData.Scan0;
-                    int srcStride = bitmapData.Stride;
-                    int minHeight = Math.Min(bitmap.Height, videoHeight);
-                    int minWidth = Math.Min(bitmap.Width, videoWidth);
-                    int bytesPerPixel = 4;
-                    int copyWidth = minWidth * bytesPerPixel;
+                    var srcPtr = (byte*)bitmapData.Scan0;
+                    var srcStride = bitmapData.Stride;
+                    var minHeight = Math.Min(bitmap.Height, videoHeight);
+                    var minWidth = Math.Min(bitmap.Width, videoWidth);
+                    const int bytesPerPixel = 4;
+                    var copyWidth = minWidth * bytesPerPixel;
 
-                    for (int y = 0; y < minHeight; y++)
-                    {
+                    for (var y = 0; y < minHeight; y++)
                         Buffer.MemoryCopy(
                             srcPtr + y * srcStride,
                             dstBuffer + y * stride,
                             copyWidth,
                             copyWidth
                         );
-                    }
                 }
 
                 // Create ImageData from the byte array
@@ -158,7 +156,7 @@ public class VideoRecorder : IDisposable
 
                 // Write frame to video
                 _mediaOutput.Video.AddFrame(imageData);
-                _frameCount++;
+                FrameCount++;
             }
             finally
             {
@@ -172,29 +170,22 @@ public class VideoRecorder : IDisposable
     }
 
     /// <summary>
-    /// Stop recording and finalize the video file
+    ///     Stop recording and finalize the video file
     /// </summary>
     public void StopRecording()
     {
-        if (!_isRecording)
-        {
+        if (!IsRecording)
             return;
-        }
 
         try
         {
             _mediaOutput?.Dispose();
             _mediaOutput = null;
-            _isRecording = false;
+            IsRecording = false;
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Failed to stop recording: {ex.Message}", ex);
         }
-    }
-
-    public void Dispose()
-    {
-        StopRecording();
     }
 }

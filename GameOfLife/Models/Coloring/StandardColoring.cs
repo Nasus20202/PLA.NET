@@ -3,7 +3,7 @@
 namespace GameOfLife.Models.Coloring;
 
 /// <summary>
-/// Standard Conway's Game of Life coloring (black and white)
+///     Standard Conway's Game of Life coloring (black and white)
 /// </summary>
 public class StandardColoring : IColoringModel
 {

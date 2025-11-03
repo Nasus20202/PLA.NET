@@ -4,16 +4,10 @@ using System.Text;
 namespace GameOfLife.Models;
 
 /// <summary>
-/// Represents a complete game state for saving/loading
+///     Represents a complete game state for saving/loading
 /// </summary>
 public class GameState
 {
-    public int Width { get; set; }
-    public int Height { get; set; }
-    public bool[,] Cells { get; set; }
-    public GameRules Rules { get; set; }
-    public long Generation { get; set; }
-
     public GameState(int width, int height, bool[,] cells, GameRules rules, long generation = 0)
     {
         Width = width;
@@ -23,10 +17,16 @@ public class GameState
         Generation = generation;
     }
 
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public bool[,] Cells { get; set; }
+    public GameRules Rules { get; set; }
+    public long Generation { get; set; }
+
     public void SaveToFile(string filePath)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"# Game of Life State");
+        sb.AppendLine("# Game of Life State");
         sb.AppendLine($"# Saved: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         sb.AppendLine($"Width: {Width}");
         sb.AppendLine($"Height: {Height}");
@@ -34,12 +34,10 @@ public class GameState
         sb.AppendLine($"Generation: {Generation}");
         sb.AppendLine("# Grid (O = alive, . = dead):");
 
-        for (int y = 0; y < Height; y++)
+        for (var y = 0; y < Height; y++)
         {
-            for (int x = 0; x < Width; x++)
-            {
+            for (var x = 0; x < Width; x++)
                 sb.Append(Cells[x, y] ? 'O' : '.');
-            }
             sb.AppendLine();
         }
 
@@ -52,11 +50,11 @@ public class GameState
         int width = 0,
             height = 0;
         long generation = 0;
-        GameRules rules = GameRules.ConwayDefault();
+        var rules = GameRules.ConwayDefault();
 
-        int gridStartLine = 0;
+        var gridStartLine = 0;
 
-        for (int i = 0; i < lines.Length; i++)
+        for (var i = 0; i < lines.Length; i++)
         {
             var line = lines[i].Trim();
 
@@ -91,18 +89,16 @@ public class GameState
             throw new InvalidDataException("Invalid file format: missing width or height");
 
         var cells = new bool[width, height];
-        int y = 0;
+        var y = 0;
 
-        for (int i = gridStartLine; i < lines.Length && y < height; i++)
+        for (var i = gridStartLine; i < lines.Length && y < height; i++)
         {
             var line = lines[i];
             if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
                 continue;
 
-            for (int x = 0; x < Math.Min(width, line.Length); x++)
-            {
-                cells[x, y] = (line[x] == 'O' || line[x] == 'o');
-            }
+            for (var x = 0; x < Math.Min(width, line.Length); x++)
+                cells[x, y] = line[x] == 'O' || line[x] == 'o';
             y++;
         }
 

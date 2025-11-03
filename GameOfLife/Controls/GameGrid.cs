@@ -1,26 +1,20 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using GameOfLife.Models;
 using GameOfLife.ViewModels;
 
 namespace GameOfLife.Controls;
 
 /// <summary>
-/// Custom control for rendering and interacting with the Game of Life grid
-/// Optimized version using DrawingVisual for low memory usage with viewport culling
+///     Custom control for rendering and interacting with the Game of Life grid
+///     Optimized version using DrawingVisual for low memory usage with viewport culling
 /// </summary>
 public class GameGrid : FrameworkElement
 {
-    private GameOfLifeEngine? _engine;
-    private MainViewModel? _viewModel;
     private const double BaseCellSize = 10; // Fixed base cell size
-    private long _lastGeneration = -1;
-    private DrawingVisual? _backgroundVisual;
-    private DrawingVisual? _cellsVisual;
-    private VisualCollection? _visualChildren;
-    private bool _forceRender;
-    private int _renderSkipCounter;
 
     public static readonly DependencyProperty EngineProperty = DependencyProperty.Register(
         nameof(Engine),
@@ -64,6 +58,33 @@ public class GameGrid : FrameworkElement
         new PropertyMetadata(null, OnColoringModelChanged)
     );
 
+    private readonly DrawingVisual? _backgroundVisual;
+    private readonly DrawingVisual? _cellsVisual;
+    private readonly VisualCollection? _visualChildren;
+    private GameOfLifeEngine? _engine;
+    private bool _forceRender;
+    private long _lastGeneration = -1;
+    private int _renderSkipCounter;
+    private MainViewModel? _viewModel;
+
+    public GameGrid()
+    {
+        _backgroundVisual = new DrawingVisual();
+        _cellsVisual = new DrawingVisual();
+        _visualChildren = new VisualCollection(this) { _backgroundVisual, _cellsVisual };
+
+        ClipToBounds = true;
+        Focusable = true; // Enable keyboard/mouse wheel focus
+        MouseLeftButtonDown += OnMouseLeftButtonDown;
+        MouseMove += OnMouseMove;
+        MouseWheel += OnMouseWheel;
+        SizeChanged += OnSizeChanged;
+        Loaded += OnLoaded;
+
+        // Update grid continuously
+        CompositionTarget.Rendering += OnRendering;
+    }
+
     public GameOfLifeEngine? Engine
     {
         get => (GameOfLifeEngine?)GetValue(EngineProperty);
@@ -100,46 +121,24 @@ public class GameGrid : FrameworkElement
         set => SetValue(ColoringModelProperty, value);
     }
 
-    public GameGrid()
-    {
-        _backgroundVisual = new DrawingVisual();
-        _cellsVisual = new DrawingVisual();
-        _visualChildren = new VisualCollection(this) { _backgroundVisual, _cellsVisual };
-
-        ClipToBounds = true;
-        Focusable = true; // Enable keyboard/mouse wheel focus
-        MouseLeftButtonDown += OnMouseLeftButtonDown;
-        MouseMove += OnMouseMove;
-        MouseWheel += OnMouseWheel;
-        SizeChanged += OnSizeChanged;
-        Loaded += OnLoaded;
-
-        // Update grid continuously
-        CompositionTarget.Rendering += OnRendering;
-    }
+    protected override int VisualChildrenCount => _visualChildren?.Count ?? 0;
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         // Find and attach to parent ScrollViewer's ScrollChanged event
         var parent = VisualTreeHelper.GetParent(this);
-        while (parent != null && parent is not System.Windows.Controls.ScrollViewer)
-        {
+        while (parent != null && parent is not ScrollViewer)
             parent = VisualTreeHelper.GetParent(parent);
-        }
 
-        if (parent is System.Windows.Controls.ScrollViewer scrollViewer)
-        {
+        if (parent is ScrollViewer scrollViewer)
             scrollViewer.ScrollChanged += OnScrollChanged;
-        }
     }
 
-    private void OnScrollChanged(object sender, System.Windows.Controls.ScrollChangedEventArgs e)
+    private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         // Force re-render when scrolling to update visible cells
         _forceRender = true;
     }
-
-    protected override int VisualChildrenCount => _visualChildren?.Count ?? 0;
 
     protected override Visual GetVisualChild(int index)
     {
@@ -180,7 +179,7 @@ public class GameGrid : FrameworkElement
                 {
                     grid.RebuildGrid();
                 }),
-                System.Windows.Threading.DispatcherPriority.Loaded
+                DispatcherPriority.Loaded
             );
         }
     }
@@ -191,17 +190,13 @@ public class GameGrid : FrameworkElement
     )
     {
         if (d is GameGrid grid)
-        {
             grid._forceRender = true;
-        }
     }
 
     private static void OnZoomChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is GameGrid grid)
-        {
             grid.UpdateZoom();
-        }
     }
 
     private static void OnRefreshTriggerChanged(
@@ -210,9 +205,7 @@ public class GameGrid : FrameworkElement
     )
     {
         if (d is GameGrid grid)
-        {
             grid._forceRender = true;
-        }
     }
 
     private static void OnColoringModelChanged(
@@ -221,9 +214,7 @@ public class GameGrid : FrameworkElement
     )
     {
         if (d is GameGrid grid)
-        {
             grid._forceRender = true;
-        }
     }
 
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
@@ -245,12 +236,10 @@ public class GameGrid : FrameworkElement
     {
         // Find the parent ScrollViewer to get viewport bounds
         var parent = VisualTreeHelper.GetParent(this);
-        while (parent != null && parent is not System.Windows.Controls.ScrollViewer)
-        {
+        while (parent != null && parent is not ScrollViewer)
             parent = VisualTreeHelper.GetParent(parent);
-        }
 
-        if (parent is System.Windows.Controls.ScrollViewer scrollViewer)
+        if (parent is ScrollViewer scrollViewer)
         {
             // Get the viewport in the ScrollViewer's coordinate space (zoomed space)
             var viewportWidth = scrollViewer.ViewportWidth;
@@ -260,7 +249,7 @@ public class GameGrid : FrameworkElement
 
             // The ScrollViewer offsets and viewport are in the TRANSFORMED (zoomed) coordinate space
             // We need to convert back to the untransformed space by dividing by zoom level
-            double zoom = ZoomLevel;
+            var zoom = ZoomLevel;
 
             return new Rect(
                 horizontalOffset / zoom,
@@ -301,7 +290,7 @@ public class GameGrid : FrameworkElement
         UpdateDimensions();
 
         // Render background
-        using (DrawingContext dc = _backgroundVisual.RenderOpen())
+        using (var dc = _backgroundVisual.RenderOpen())
         {
             dc.DrawRectangle(
                 Brushes.Black,
@@ -319,7 +308,7 @@ public class GameGrid : FrameworkElement
         if (_engine == null || _cellsVisual == null)
             return;
 
-        using (DrawingContext dc = _cellsVisual.RenderOpen())
+        using (var dc = _cellsVisual.RenderOpen())
         {
             // Background is on a separate layer, just draw the cells
             RenderVisibleCells(dc);
@@ -335,80 +324,71 @@ public class GameGrid : FrameworkElement
         var visibleBounds = GetVisibleBounds();
 
         // Calculate which cells are visible (add margin for smooth scrolling)
-        int margin = 5; // Extra cells to render beyond viewport
-        int startX = Math.Max(0, (int)(visibleBounds.Left / BaseCellSize) - margin);
-        int endX = Math.Min(_engine.Width, (int)(visibleBounds.Right / BaseCellSize) + margin + 1);
-        int startY = Math.Max(0, (int)(visibleBounds.Top / BaseCellSize) - margin);
-        int endY = Math.Min(
+        var margin = 5; // Extra cells to render beyond viewport
+        var startX = Math.Max(0, (int)(visibleBounds.Left / BaseCellSize) - margin);
+        var endX = Math.Min(_engine.Width, (int)(visibleBounds.Right / BaseCellSize) + margin + 1);
+        var startY = Math.Max(0, (int)(visibleBounds.Top / BaseCellSize) - margin);
+        var endY = Math.Min(
             _engine.Height,
             (int)(visibleBounds.Bottom / BaseCellSize) + margin + 1
         );
 
         // Determine if we should use ColoringModel (only if it's not Standard coloring)
-        bool useColoringModel = ColoringModel != null && ColoringModel.Name != "Standard";
+        var useColoringModel = ColoringModel != null && ColoringModel.Name != "Standard";
 
         // Batch rendering for single-color cells (Rectangle shape with CellColor and no special coloring)
         if (CellShape == "Rectangle" && !useColoringModel)
         {
             var geometry = new GeometryGroup();
-            for (int x = startX; x < endX; x++)
-            {
-                for (int y = startY; y < endY; y++)
+            for (var x = startX; x < endX; x++)
+            for (var y = startY; y < endY; y++)
+                if (_engine.GetCell(x, y))
                 {
-                    if (_engine.GetCell(x, y))
-                    {
-                        double posX = x * BaseCellSize;
-                        double posY = y * BaseCellSize;
-                        double size = BaseCellSize - 0.5;
-                        geometry.Children.Add(
-                            new RectangleGeometry(new Rect(posX, posY, size, size))
-                        );
-                    }
+                    var posX = x * BaseCellSize;
+                    var posY = y * BaseCellSize;
+                    var size = BaseCellSize - 0.5;
+                    geometry.Children.Add(new RectangleGeometry(new Rect(posX, posY, size, size)));
                 }
-            }
+
             if (geometry.Children.Count > 0)
                 dc.DrawGeometry(CellColor, null, geometry);
         }
         else
         {
             // For color-varying cells or non-standard shapes, draw individually
-            for (int x = startX; x < endX; x++)
-            {
-                for (int y = startY; y < endY; y++)
+            for (var x = startX; x < endX; x++)
+            for (var y = startY; y < endY; y++)
+                if (_engine.GetCell(x, y))
                 {
-                    if (_engine.GetCell(x, y))
+                    Brush cellBrush;
+                    if (useColoringModel && ColoringModel != null)
                     {
-                        Brush cellBrush;
-                        if (useColoringModel && ColoringModel != null)
-                        {
-                            int neighbors = _engine.GetNeighborCount(x, y);
-                            var color = ColoringModel.GetCellColor(x, y, true, 0, neighbors);
-                            cellBrush = new SolidColorBrush(color);
-                        }
-                        else
-                        {
-                            cellBrush = CellColor;
-                        }
-
-                        DrawCell(dc, x, y, cellBrush);
+                        var neighbors = _engine.GetNeighborCount(x, y);
+                        var color = ColoringModel.GetCellColor(x, y, true, 0, neighbors);
+                        cellBrush = new SolidColorBrush(color);
                     }
+                    else
+                    {
+                        cellBrush = CellColor;
+                    }
+
+                    DrawCell(dc, x, y, cellBrush);
                 }
-            }
         }
     }
 
     private void DrawCell(DrawingContext dc, int x, int y, Brush? cellBrush = null)
     {
         cellBrush ??= CellColor;
-        double posX = x * BaseCellSize;
-        double posY = y * BaseCellSize;
-        double size = BaseCellSize - 0.5;
+        var posX = x * BaseCellSize;
+        var posY = y * BaseCellSize;
+        var size = BaseCellSize - 0.5;
 
         if (CellShape == "Ellipse")
         {
-            double centerX = posX + size / 2;
-            double centerY = posY + size / 2;
-            double radius = size / 2;
+            var centerX = posX + size / 2;
+            var centerY = posY + size / 2;
+            var radius = size / 2;
             dc.DrawEllipse(cellBrush, null, new Point(centerX, centerY), radius, radius);
         }
         else if (CellShape == "RoundedRectangle")
@@ -430,13 +410,9 @@ public class GameGrid : FrameworkElement
     private void OnMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton == MouseButtonState.Pressed && IsMouseCaptured)
-        {
             HandleMouseInteraction(e.GetPosition(this));
-        }
         else if (e.LeftButton == MouseButtonState.Released)
-        {
             ReleaseMouseCapture();
-        }
     }
 
     private void OnMouseWheel(object sender, MouseWheelEventArgs e)
@@ -450,8 +426,8 @@ public class GameGrid : FrameworkElement
 
         // Calculate zoom change based on wheel delta
         // Positive delta = zoom in, negative = zoom out
-        double zoomDelta = e.Delta > 0 ? 0.1 : -0.1;
-        double newZoom = _viewModel.ZoomLevel + zoomDelta;
+        var zoomDelta = e.Delta > 0 ? 0.1 : -0.1;
+        var newZoom = _viewModel.ZoomLevel + zoomDelta;
 
         // Clamp zoom between 0.5 and 5.0 for reasonable limits
         newZoom = Math.Max(0.5, Math.Min(5.0, newZoom));
@@ -477,8 +453,8 @@ public class GameGrid : FrameworkElement
 
         // Since we use LayoutTransform, the position is already in the transformed coordinate space
         // We just need to divide by BaseCellSize
-        int x = (int)(position.X / BaseCellSize);
-        int y = (int)(position.Y / BaseCellSize);
+        var x = (int)(position.X / BaseCellSize);
+        var y = (int)(position.Y / BaseCellSize);
 
         if (x >= 0 && x < _engine.Width && y >= 0 && y < _engine.Height)
         {

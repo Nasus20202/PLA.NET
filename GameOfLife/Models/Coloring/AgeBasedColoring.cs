@@ -3,11 +3,11 @@
 namespace GameOfLife.Models.Coloring;
 
 /// <summary>
-/// Age-based coloring - cells have different colors based on their age
+///     Age-based coloring - cells have different colors based on their age
 /// </summary>
 public class AgeBasedColoring : IColoringModel
 {
-    private Dictionary<(int, int), int> _cellAge = new();
+    private readonly Dictionary<(int, int), int> _cellAge = new();
 
     public string Name => "Age-Based";
     public string Description => "Colors vary based on cell age (younger = brighter)";
@@ -20,9 +20,9 @@ public class AgeBasedColoring : IColoringModel
         var key = (x, y);
         if (_cellAge.ContainsKey(key))
         {
-            int cellAge = _cellAge[key];
+            var cellAge = _cellAge[key];
             // Color transitions from bright to dark based on age
-            byte brightness = (byte)Math.Max(50, 255 - (cellAge * 5));
+            var brightness = (byte)Math.Max(50, 255 - cellAge * 5);
             return Color.FromRgb(brightness, brightness, brightness);
         }
 
@@ -33,28 +33,20 @@ public class AgeBasedColoring : IColoringModel
     {
         // Initialize all alive cells with age 0
         _cellAge.Clear();
-        int width = gridState.GetLength(0);
-        int height = gridState.GetLength(1);
+        var width = gridState.GetLength(0);
+        var height = gridState.GetLength(1);
 
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
-            {
-                if (gridState[x, y])
-                {
-                    _cellAge[(x, y)] = 0;
-                }
-            }
-        }
+        for (var x = 0; x < width; x++)
+        for (var y = 0; y < height; y++)
+            if (gridState[x, y])
+                _cellAge[(x, y)] = 0;
     }
 
     public void OnCellsBorn(List<(int x, int y)> newCells, bool[,] currentState)
     {
         // Set age 0 for newly born cells
         foreach (var (x, y) in newCells)
-        {
             _cellAge[(x, y)] = 0;
-        }
     }
 
     public void OnCellsDead(List<(int x, int y)> deadCells)
@@ -64,9 +56,7 @@ public class AgeBasedColoring : IColoringModel
         {
             var key = (x, y);
             if (_cellAge.ContainsKey(key))
-            {
                 _cellAge.Remove(key);
-            }
         }
     }
 
@@ -74,18 +64,16 @@ public class AgeBasedColoring : IColoringModel
     {
         // Increment age of all living cells
         foreach (var key in _cellAge.Keys.ToList())
-        {
             _cellAge[key]++;
-        }
-    }
-
-    public void SetCellAge(int x, int y, int age)
-    {
-        _cellAge[(x, y)] = age;
     }
 
     public void Clear()
     {
         _cellAge.Clear();
+    }
+
+    public void SetCellAge(int x, int y, int age)
+    {
+        _cellAge[(x, y)] = age;
     }
 }

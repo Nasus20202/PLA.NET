@@ -1,19 +1,12 @@
 ﻿namespace GameOfLife.Models;
 
 /// <summary>
-/// Core engine for Conway's Game of Life with configurable rules
+///     Core engine for Conway's Game of Life with configurable rules
 /// </summary>
 public class GameOfLifeEngine
 {
     private bool[,] _currentState;
     private bool[,] _nextState;
-
-    public int Width { get; private set; }
-    public int Height { get; private set; }
-    public GameRules Rules { get; set; }
-    public long Generation { get; private set; }
-    public long BornCells { get; private set; }
-    public long DeadCells { get; private set; }
 
     public GameOfLifeEngine(int width, int height, GameRules? rules = null)
     {
@@ -27,6 +20,13 @@ public class GameOfLifeEngine
         DeadCells = 0;
     }
 
+    public int Width { get; }
+    public int Height { get; }
+    public GameRules Rules { get; set; }
+    public long Generation { get; private set; }
+    public long BornCells { get; private set; }
+    public long DeadCells { get; private set; }
+
     public bool GetCell(int x, int y)
     {
         if (x < 0 || x >= Width || y < 0 || y >= Height)
@@ -37,17 +37,13 @@ public class GameOfLifeEngine
     public void SetCell(int x, int y, bool alive)
     {
         if (x >= 0 && x < Width && y >= 0 && y < Height)
-        {
             _currentState[x, y] = alive;
-        }
     }
 
     public void ToggleCell(int x, int y)
     {
         if (x >= 0 && x < Width && y >= 0 && y < Height)
-        {
             _currentState[x, y] = !_currentState[x, y];
-        }
     }
 
     public void Clear()
@@ -61,13 +57,10 @@ public class GameOfLifeEngine
     public void Randomize(double probability = 0.3)
     {
         var random = new Random();
-        for (int x = 0; x < Width; x++)
-        {
-            for (int y = 0; y < Height; y++)
-            {
-                _currentState[x, y] = random.NextDouble() < probability;
-            }
-        }
+        for (var x = 0; x < Width; x++)
+        for (var y = 0; y < Height; y++)
+            _currentState[x, y] = random.NextDouble() < probability;
+
         Generation = 0;
         BornCells = 0;
         DeadCells = 0;
@@ -80,40 +73,34 @@ public class GameOfLifeEngine
         var newBornCells = new List<(int x, int y)>();
         var deadCells = new List<(int x, int y)>();
 
-        for (int x = 0; x < Width; x++)
+        for (var x = 0; x < Width; x++)
+        for (var y = 0; y < Height; y++)
         {
-            for (int y = 0; y < Height; y++)
+            var neighbors = CountNeighbors(x, y);
+            var currentlyAlive = _currentState[x, y];
+            var nextAlive = Rules.ShouldBeAlive(currentlyAlive, neighbors);
+
+            _nextState[x, y] = nextAlive;
+
+            if (!currentlyAlive && nextAlive)
             {
-                int neighbors = CountNeighbors(x, y);
-                bool currentlyAlive = _currentState[x, y];
-                bool nextAlive = Rules.ShouldBeAlive(currentlyAlive, neighbors);
-
-                _nextState[x, y] = nextAlive;
-
-                if (!currentlyAlive && nextAlive)
-                {
-                    born++;
-                    newBornCells.Add((x, y));
-                }
-                else if (currentlyAlive && !nextAlive)
-                {
-                    died++;
-                    deadCells.Add((x, y));
-                }
+                born++;
+                newBornCells.Add((x, y));
+            }
+            else if (currentlyAlive && !nextAlive)
+            {
+                died++;
+                deadCells.Add((x, y));
             }
         }
 
         // Notify coloring model about newly born cells before state swap
         if (coloringModel != null && newBornCells.Count > 0)
-        {
             coloringModel.OnCellsBorn(newBornCells, _currentState);
-        }
 
         // Notify coloring model about dead cells
         if (coloringModel != null && deadCells.Count > 0)
-        {
             coloringModel.OnCellsDead(deadCells);
-        }
 
         // Swap states
         var temp = _currentState;
@@ -127,38 +114,32 @@ public class GameOfLifeEngine
 
     private int CountNeighbors(int x, int y)
     {
-        int count = 0;
-        for (int dx = -1; dx <= 1; dx++)
+        var count = 0;
+        for (var dx = -1; dx <= 1; dx++)
+        for (var dy = -1; dy <= 1; dy++)
         {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                if (dx == 0 && dy == 0)
-                    continue;
+            if (dx == 0 && dy == 0)
+                continue;
 
-                int nx = x + dx;
-                int ny = y + dy;
+            var nx = x + dx;
+            var ny = y + dy;
 
-                if (nx >= 0 && nx < Width && ny >= 0 && ny < Height)
-                {
-                    if (_currentState[nx, ny])
-                        count++;
-                }
-            }
+            if (nx >= 0 && nx < Width && ny >= 0 && ny < Height)
+                if (_currentState[nx, ny])
+                    count++;
         }
+
         return count;
     }
 
     public int GetLivingCellsCount()
     {
-        int count = 0;
-        for (int x = 0; x < Width; x++)
-        {
-            for (int y = 0; y < Height; y++)
-            {
-                if (_currentState[x, y])
-                    count++;
-            }
-        }
+        var count = 0;
+        for (var x = 0; x < Width; x++)
+        for (var y = 0; y < Height; y++)
+            if (_currentState[x, y])
+                count++;
+
         return count;
     }
 
@@ -176,37 +157,31 @@ public class GameOfLifeEngine
     }
 
     /// <summary>
-    /// Place a preset pattern at a specific position on the grid
+    ///     Place a preset pattern at a specific position on the grid
     /// </summary>
     public void PlacePattern(PresetPatterns pattern, int startX, int startY, bool merge = false)
     {
-        for (int py = 0; py < pattern.Height; py++)
+        for (var py = 0; py < pattern.Height; py++)
+        for (var px = 0; px < pattern.Width; px++)
         {
-            for (int px = 0; px < pattern.Width; px++)
-            {
-                int gridX = startX + px;
-                int gridY = startY + py;
+            var gridX = startX + px;
+            var gridY = startY + py;
 
-                if (gridX >= 0 && gridX < Width && gridY >= 0 && gridY < Height)
-                {
-                    bool patternCell = pattern.Pattern[px, py];
-                    if (merge)
-                    {
-                        // OR operation - preserve existing cells
-                        _currentState[gridX, gridY] = _currentState[gridX, gridY] || patternCell;
-                    }
-                    else
-                    {
-                        // Replace mode
-                        _currentState[gridX, gridY] = patternCell;
-                    }
-                }
+            if (gridX >= 0 && gridX < Width && gridY >= 0 && gridY < Height)
+            {
+                var patternCell = pattern.Pattern[px, py];
+                if (merge)
+                    // OR operation - preserve existing cells
+                    _currentState[gridX, gridY] = _currentState[gridX, gridY] || patternCell;
+                else
+                    // Replace mode
+                    _currentState[gridX, gridY] = patternCell;
             }
         }
     }
 
     /// <summary>
-    /// Get the number of neighbors for a specific cell
+    ///     Get the number of neighbors for a specific cell
     /// </summary>
     public int GetNeighborCount(int x, int y)
     {

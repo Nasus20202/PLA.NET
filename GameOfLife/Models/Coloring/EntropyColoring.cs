@@ -3,7 +3,7 @@
 namespace GameOfLife.Models.Coloring;
 
 /// <summary>
-/// Entropy-based coloring - colors based on neighbor count
+///     Entropy-based coloring - colors based on neighbor count
 /// </summary>
 public class EntropyColoring : IColoringModel
 {
@@ -18,11 +18,11 @@ public class EntropyColoring : IColoringModel
         // Map neighbor count (0-8) to color gradient from Blue to Red
         // 0 neighbors = Blue (0, 0, 255)
         // 8 neighbors = Red (255, 0, 0)
-        double ratio = neighbors / 8.0; // 0.0 to 1.0
+        var ratio = neighbors / 8.0; // 0.0 to 1.0
 
-        byte red = (byte)(ratio * 255); // 0 to 255
+        var red = (byte)(ratio * 255); // 0 to 255
         byte green = 0;
-        byte blue = (byte)((1 - ratio) * 255); // 255 to 0
+        var blue = (byte)((1 - ratio) * 255); // 255 to 0
 
         return Color.FromRgb(red, green, blue);
     }

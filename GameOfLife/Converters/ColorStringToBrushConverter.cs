@@ -5,19 +5,17 @@ using System.Windows.Media;
 namespace GameOfLife.Converters;
 
 /// <summary>
-/// Converts a hex color string to a Brush
+///     Converts a hex color string to a Brush
 /// </summary>
 public class ColorStringToBrushConverter : IValueConverter
 {
-    private static readonly Brush DefaultBrush = Brushes.LimeGreen;
     private const string DefaultColorString = "#FF00FF00";
+    private static readonly Brush DefaultBrush = Brushes.LimeGreen;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not string colorString || string.IsNullOrWhiteSpace(colorString))
-        {
             return DefaultBrush;
-        }
 
         try
         {
@@ -39,9 +37,7 @@ public class ColorStringToBrushConverter : IValueConverter
     )
     {
         if (value is SolidColorBrush brush)
-        {
             return brush.Color.ToString();
-        }
         return DefaultColorString;
     }
 }

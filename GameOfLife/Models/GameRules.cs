@@ -3,14 +3,11 @@
 namespace GameOfLife.Models;
 
 /// <summary>
-/// Represents the rules for the Game of Life in B/S notation
-/// Example: B3/S23 (Conway's Game of Life)
+///     Represents the rules for the Game of Life in B/S notation
+///     Example: B3/S23 (Conway's Game of Life)
 /// </summary>
 public class GameRules
 {
-    public HashSet<int> BirthNumbers { get; set; }
-    public HashSet<int> SurvivalNumbers { get; set; }
-
     public GameRules()
     {
         BirthNumbers = new HashSet<int>();
@@ -23,6 +20,9 @@ public class GameRules
         SurvivalNumbers = new HashSet<int>(survivalNumbers);
     }
 
+    public HashSet<int> BirthNumbers { get; set; }
+    public HashSet<int> SurvivalNumbers { get; set; }
+
     public static GameRules ConwayDefault()
     {
         return new GameRules(new[] { 3 }, new[] { 2, 3 });
@@ -32,8 +32,7 @@ public class GameRules
     {
         if (currentlyAlive)
             return SurvivalNumbers.Contains(neighbors);
-        else
-            return BirthNumbers.Contains(neighbors);
+        return BirthNumbers.Contains(neighbors);
     }
 
     public override string ToString()

@@ -3,7 +3,7 @@
 namespace GameOfLife.Models.Coloring;
 
 /// <summary>
-/// Rainbow coloring - based on position in grid
+///     Rainbow coloring - based on position in grid
 /// </summary>
 public class RainbowColoring(int gridWidth = 100, int gridHeight = 100) : IColoringModel
 {
@@ -16,7 +16,7 @@ public class RainbowColoring(int gridWidth = 100, int gridHeight = 100) : IColor
             return Colors.Black;
 
         // Create rainbow based on position
-        double hue = ((double)(x + y) / (gridWidth + gridHeight)) * 360;
+        var hue = (double)(x + y) / (gridWidth + gridHeight) * 360;
         return HsvToRgb(hue, 1.0, 1.0);
     }
 
@@ -32,9 +32,9 @@ public class RainbowColoring(int gridWidth = 100, int gridHeight = 100) : IColor
 
     private Color HsvToRgb(double hue, double saturation, double value)
     {
-        double c = value * saturation;
-        double x = c * (1 - Math.Abs((hue / 60) % 2 - 1));
-        double m = value - c;
+        var c = value * saturation;
+        var x = c * (1 - Math.Abs(hue / 60 % 2 - 1));
+        var m = value - c;
 
         double r,
             g,

@@ -1,15 +1,14 @@
-﻿using System.Windows.Media;
+﻿using System.Diagnostics;
+using System.Windows.Media;
 using GameOfLife.ViewModels;
 
 namespace GameOfLife;
 
 /// <summary>
-/// Interaction logic for MainWindow.xaml
+///     Interaction logic for MainWindow.xaml
 /// </summary>
 public partial class MainWindow
 {
-    private MainViewModel? ViewModel => DataContext as MainViewModel;
-
     public MainWindow()
     {
         InitializeComponent();
@@ -18,24 +17,25 @@ public partial class MainWindow
         CompositionTarget.Rendering += OnRendering;
     }
 
+    private MainViewModel? ViewModel => DataContext as MainViewModel;
+
     private void OnRendering(object? sender, EventArgs e)
     {
         // Capture frame if recording is active
-        if (ViewModel?.GetVideoRecorder()?.IsRecording == true)
+        if (ViewModel?.GetVideoRecorder()?.IsRecording != true)
+            return;
+        try
         {
-            try
-            {
-                // Capture the current frame from the GameGrid control using actual dimensions
-                int width = ViewModel.VideoWidth;
-                int height = ViewModel.VideoHeight;
+            // Capture the current frame from the GameGrid control using actual dimensions
+            var width = ViewModel.VideoWidth;
+            var height = ViewModel.VideoHeight;
 
-                ViewModel.GetVideoRecorder()?.CaptureFrame(GameGridControl, width, height);
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't stop the application
-                System.Diagnostics.Debug.WriteLine($"Frame capture error: {ex.Message}");
-            }
+            ViewModel.GetVideoRecorder()?.CaptureFrame(GameGridControl, width, height);
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't stop the application
+            Debug.WriteLine($"Frame capture error: {ex.Message}");
         }
     }
 

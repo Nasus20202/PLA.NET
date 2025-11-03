@@ -3,12 +3,13 @@
 namespace GameOfLife.Models.Coloring;
 
 /// <summary>
-/// QuadLife coloring - uses four states/colors, similar to Immigration but with 4 colors
+///     QuadLife coloring - uses four states/colors, similar to Immigration but with 4 colors
 /// </summary>
 public class QuadLifeColoring : IColoringModel
 {
-    private Dictionary<(int, int), Color> _cellColors = new();
-    private Color[] _quadColors = new[]
+    private readonly Dictionary<(int, int), Color> _cellColors = new();
+
+    private readonly Color[] _quadColors = new[]
     {
         Color.FromRgb(255, 0, 0), // Red
         Color.FromRgb(255, 255, 0), // Yellow
@@ -17,6 +18,7 @@ public class QuadLifeColoring : IColoringModel
     };
 
     public string Name => "QuadLife";
+
     public string Description =>
         "Four different colors - nowy kolor na podstawie większości sąsiadów";
 
@@ -37,59 +39,53 @@ public class QuadLifeColoring : IColoringModel
         // Assign random colors to all alive cells from the 4 available colors
         _cellColors.Clear();
         var random = new Random();
-        int width = gridState.GetLength(0);
-        int height = gridState.GetLength(1);
+        var width = gridState.GetLength(0);
+        var height = gridState.GetLength(1);
 
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < height; y++)
+        for (var x = 0; x < width; x++)
+        for (var y = 0; y < height; y++)
+            if (gridState[x, y])
             {
-                if (gridState[x, y])
-                {
-                    int colorIndex = random.Next(_quadColors.Length);
-                    _cellColors[(x, y)] = _quadColors[colorIndex];
-                }
+                var colorIndex = random.Next(_quadColors.Length);
+                _cellColors[(x, y)] = _quadColors[colorIndex];
             }
-        }
     }
 
     public void OnCellsBorn(List<(int x, int y)> newCells, bool[,] currentState)
     {
         // Assign color to newly born cells based on majority color of alive neighbors
-        int width = currentState.GetLength(0);
-        int height = currentState.GetLength(1);
+        var width = currentState.GetLength(0);
+        var height = currentState.GetLength(1);
 
         foreach (var (x, y) in newCells)
         {
             // Count colors of alive neighbors
             var colorCounts = new Dictionary<Color, int>();
 
-            for (int dx = -1; dx <= 1; dx++)
+            for (var dx = -1; dx <= 1; dx++)
+            for (var dy = -1; dy <= 1; dy++)
             {
-                for (int dy = -1; dy <= 1; dy++)
+                if (dx == 0 && dy == 0)
+                    continue;
+
+                var nx = x + dx;
+                var ny = y + dy;
+
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height && currentState[nx, ny])
                 {
-                    if (dx == 0 && dy == 0)
-                        continue;
+                    var key = (nx, ny);
+                    var neighborColor = _cellColors.ContainsKey(key)
+                        ? _cellColors[key]
+                        : _quadColors[0];
 
-                    int nx = x + dx;
-                    int ny = y + dy;
-
-                    if (nx >= 0 && nx < width && ny >= 0 && ny < height && currentState[nx, ny])
-                    {
-                        var key = (nx, ny);
-                        Color neighborColor = _cellColors.ContainsKey(key)
-                            ? _cellColors[key]
-                            : _quadColors[0];
-
-                        if (!colorCounts.ContainsKey(neighborColor))
-                            colorCounts[neighborColor] = 0;
-                        colorCounts[neighborColor]++;
-                    }
+                    if (!colorCounts.ContainsKey(neighborColor))
+                        colorCounts[neighborColor] = 0;
+                    colorCounts[neighborColor]++;
                 }
             }
 
             // Find majority color
-            Color cellColor = _quadColors[0];
+            var cellColor = _quadColors[0];
 
             if (colorCounts.Count == 1)
             {
@@ -102,13 +98,11 @@ public class QuadLifeColoring : IColoringModel
                 // Find which color is NOT in the neighbors
                 var neighborsWithColor = new HashSet<Color>(colorCounts.Keys);
                 foreach (var color in _quadColors)
-                {
                     if (!neighborsWithColor.Contains(color))
                     {
                         cellColor = color;
                         break;
                     }
-                }
             }
             else if (colorCounts.Count > 0)
             {

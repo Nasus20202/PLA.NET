@@ -1,16 +1,10 @@
 ﻿namespace GameOfLife.Models;
 
 /// <summary>
-/// Preset patterns for Game of Life (from Wikipedia and other sources)
+///     Preset patterns for Game of Life (from Wikipedia and other sources)
 /// </summary>
 public class PresetPatterns
 {
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public bool[,] Pattern { get; set; }
-    public int Width { get; set; }
-    public int Height { get; set; }
-
     public PresetPatterns(string name, string description, bool[,] pattern)
     {
         Name = name;
@@ -20,8 +14,14 @@ public class PresetPatterns
         Height = pattern.GetLength(1);
     }
 
+    public string Name { get; set; }
+    public string Description { get; set; }
+    public bool[,] Pattern { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+
     /// <summary>
-    /// Gets a collection of built-in preset patterns
+    ///     Gets a collection of built-in preset patterns
     /// </summary>
     public static Dictionary<string, PresetPatterns> GetAllPatterns()
     {
@@ -58,7 +58,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBlock()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { true, true },
             { true, true },
@@ -68,7 +68,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBeehive()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
@@ -78,7 +78,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateLoaf()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
@@ -89,7 +89,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBoat()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { true, true, false },
             { true, false, true },
@@ -99,7 +99,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateTub()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
@@ -114,7 +114,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBlinker()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { true, true, true },
         };
@@ -123,7 +123,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateBeacon()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { true, true },
             { false, false },
@@ -133,7 +133,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateToad()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, true, true },
             { true, true, true, false },
@@ -143,7 +143,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreatePulsar()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, false, true, true, true, false, false, false, true, true, true, false, false },
             {
@@ -290,7 +290,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreatePentDecathlon()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false },
             { true, false, true },
@@ -310,7 +310,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateGlider()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false },
             { false, false, true },
@@ -325,7 +325,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateLwss()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { true, false, false, true, false },
             { false, false, false, false, true },
@@ -337,7 +337,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateMwss()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false, false, true, false },
             { true, false, false, false, false, true },
@@ -349,7 +349,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateHwss()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false, false, false, true, false },
             { true, false, false, false, false, false, true },
@@ -365,7 +365,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateAcorn()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, false, false, false, false, false },
             { true, false, true, true, false, true, true },
@@ -375,7 +375,7 @@ public class PresetPatterns
 
     private static PresetPatterns CreateRPentomino()
     {
-        bool[,] pattern = new[,]
+        var pattern = new[,]
         {
             { false, true, true },
             { true, true, false },

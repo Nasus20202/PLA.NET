@@ -3,12 +3,12 @@
 namespace GameOfLife.ViewModels;
 
 /// <summary>
-/// A simple ICommand implementation for MVVM
+///     A simple ICommand implementation for MVVM
 /// </summary>
 public class RelayCommand : ICommand
 {
-    private readonly Action<object?> _execute;
     private readonly Predicate<object?>? _canExecute;
+    private readonly Action<object?> _execute;
 
     public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
     {
