@@ -4,11 +4,17 @@ namespace University.Application.Interfaces;
 
 public interface ICourseService
 {
-    Task<Course> CreateCourseAsync(string nazwa, string kodCourseu, int punktyECTS, int wydzialId, int? profesorId = null);
+    Task<Course> CreateCourseAsync(
+        string name,
+        string courseCode,
+        int ectsPoints,
+        int departmentId,
+        int? professorId = null
+    );
     Task<Course?> GetCourseByIdAsync(int id);
     Task<IEnumerable<Course>> GetAllCoursesAsync();
-    Task UpdateCourseAsync(Course kurs);
+    Task UpdateCourseAsync(Course course);
     Task DeleteCourseAsync(int id);
-    Task AddPrerequisiteAsync(int kursId, int prerequisiteId);
-    Task RemovePrerequisiteAsync(int kursId, int prerequisiteId);
+    Task AddPrerequisiteAsync(int courseId, int prerequisiteId);
+    Task RemovePrerequisiteAsync(int courseId, int prerequisiteId);
 }

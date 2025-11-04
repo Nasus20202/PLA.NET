@@ -8,24 +8,32 @@ public class StudentService : IStudentService
     private readonly IUniversityRepository _repository;
     private readonly IIndexCounterService _indexCounterService;
 
-    public StudentService(IUniversityRepository repository, IIndexCounterService indexCounterService)
+    public StudentService(
+        IUniversityRepository repository,
+        IIndexCounterService indexCounterService
+    )
     {
         _repository = repository;
         _indexCounterService = indexCounterService;
     }
 
-    public async Task<Student> CreateStudentAsync(string imie, string nazwisko, int rokStudiow, Address adres)
+    public async Task<Student> CreateStudentAsync(
+        string firstName,
+        string lastName,
+        int yearOfStudy,
+        Address address
+    )
     {
         // Pobierz kolejny indeks (w transakcji)
         var indeks = await _indexCounterService.GetNextIndexAsync("S");
 
         var student = new Student
         {
-            FirstName = imie,
-            LastName = nazwisko,
+            FirstName = firstName,
+            LastName = lastName,
             UniversityIndex = indeks,
-            YearOfStudy = rokStudiow,
-            ResidenceAddress = adres
+            YearOfStudy = yearOfStudy,
+            ResidenceAddress = address,
         };
 
         await _repository.AddStudentAsync(student);
@@ -34,20 +42,27 @@ public class StudentService : IStudentService
         return student;
     }
 
-    public async Task<MasterStudent> CreateMasterStudentAsync(string imie, string nazwisko, int rokStudiow, Address adres, string? tematPracy = null, int? promotorId = null)
+    public async Task<MasterStudent> CreateMasterStudentAsync(
+        string firstName,
+        string lastName,
+        int yearOfStudy,
+        Address address,
+        string? thesisTopic = null,
+        int? supervisorId = null
+    )
     {
         // Pobierz kolejny indeks (w transakcji)
         var indeks = await _indexCounterService.GetNextIndexAsync("S");
 
         var student = new MasterStudent
         {
-            FirstName = imie,
-            LastName = nazwisko,
+            FirstName = firstName,
+            LastName = lastName,
             UniversityIndex = indeks,
-            YearOfStudy = rokStudiow,
-            ResidenceAddress = adres,
-            ThesisTitle = tematPracy,
-            SupervisorId = promotorId
+            YearOfStudy = yearOfStudy,
+            ResidenceAddress = address,
+            ThesisTitle = thesisTopic,
+            SupervisorId = supervisorId,
         };
 
         await _repository.AddStudentAsync(student);
@@ -76,7 +91,7 @@ public class StudentService : IStudentService
     {
         var student = await _repository.GetStudentByIdAsync(id);
         if (student == null)
-            throw new InvalidOperationException($"Student o ID {id} nie istnieje.");
+            throw new InvalidOperationException($"Student with ID {id} does not exist.");
 
         // Próbuj zmniejszyć licznik jeśli to ostatni student
         await _indexCounterService.TryDecrementIndexAsync("S", student.UniversityIndex);

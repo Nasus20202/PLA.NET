@@ -44,7 +44,9 @@ public interface IUniversityRepository
     Task DeleteIndexCounterAsync(IndexCounter counter);
 
     Task<IEnumerable<T>> ExecuteQueryAsync<T>(Func<IQueryable<Student>, IQueryable<T>> query);
-    Task<IEnumerable<T>> ExecuteProfessorQueryAsync<T>(Func<IQueryable<Professor>, IQueryable<T>> query);
+    Task<IEnumerable<T>> ExecuteProfessorQueryAsync<T>(
+        Func<IQueryable<Professor>, IQueryable<T>> query
+    );
     Task<IEnumerable<T>> ExecuteCourseQueryAsync<T>(Func<IQueryable<Course>, IQueryable<T>> query);
 
     Task BeginTransactionAsync();

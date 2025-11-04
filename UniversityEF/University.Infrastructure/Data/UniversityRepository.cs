@@ -62,21 +62,21 @@ public class UniversityRepository : IUniversityRepository
         return await _context.Professors.Include(p => p.Office).ToListAsync();
     }
 
-    public Task AddProfessorAsync(Professor profesor)
+    public Task AddProfessorAsync(Professor professor)
     {
-        _context.Professors.Add(profesor);
+        _context.Professors.Add(professor);
         return Task.CompletedTask;
     }
 
-    public Task UpdateProfessorAsync(Professor profesor)
+    public Task UpdateProfessorAsync(Professor professor)
     {
-        _context.Professors.Update(profesor);
+        _context.Professors.Update(professor);
         return Task.CompletedTask;
     }
 
-    public Task DeleteProfessorAsync(Professor profesor)
+    public Task DeleteProfessorAsync(Professor professor)
     {
-        _context.Professors.Remove(profesor);
+        _context.Professors.Remove(professor);
         return Task.CompletedTask;
     }
 
@@ -99,21 +99,21 @@ public class UniversityRepository : IUniversityRepository
             .ToListAsync();
     }
 
-    public Task AddCourseAsync(Course kurs)
+    public Task AddCourseAsync(Course course)
     {
-        _context.Courses.Add(kurs);
+        _context.Courses.Add(course);
         return Task.CompletedTask;
     }
 
-    public Task UpdateCourseAsync(Course kurs)
+    public Task UpdateCourseAsync(Course course)
     {
-        _context.Courses.Update(kurs);
+        _context.Courses.Update(course);
         return Task.CompletedTask;
     }
 
-    public Task DeleteCourseAsync(Course kurs)
+    public Task DeleteCourseAsync(Course course)
     {
-        _context.Courses.Remove(kurs);
+        _context.Courses.Remove(course);
         return Task.CompletedTask;
     }
 
@@ -130,21 +130,21 @@ public class UniversityRepository : IUniversityRepository
         return await _context.Faculties.ToListAsync();
     }
 
-    public Task AddDepartmentAsync(Department wydzial)
+    public Task AddDepartmentAsync(Department department)
     {
-        _context.Faculties.Add(wydzial);
+        _context.Faculties.Add(department);
         return Task.CompletedTask;
     }
 
-    public Task UpdateDepartmentAsync(Department wydzial)
+    public Task UpdateDepartmentAsync(Department department)
     {
-        _context.Faculties.Update(wydzial);
+        _context.Faculties.Update(department);
         return Task.CompletedTask;
     }
 
-    public Task DeleteDepartmentAsync(Department wydzial)
+    public Task DeleteDepartmentAsync(Department department)
     {
-        _context.Faculties.Remove(wydzial);
+        _context.Faculties.Remove(department);
         return Task.CompletedTask;
     }
 
@@ -190,9 +190,11 @@ public class UniversityRepository : IUniversityRepository
     }
 
     // Offices
-    public Task AddOfficeAsync(Office gabinet)
+    // Offices
+
+    public Task AddOfficeAsync(Office office)
     {
-        _context.Offices.Add(gabinet);
+        _context.Offices.Add(office);
         return Task.CompletedTask;
     }
 

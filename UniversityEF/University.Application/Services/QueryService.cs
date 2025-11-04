@@ -5,11 +5,11 @@ using University.Domain.Entities;
 namespace University.Application.Services;
 
 /// <summary>
-/// Serwis z zaawansowanymi zapytaniami LINQ
-/// Wszystkie zapytania są zoptymalizowane:
-/// - AsNoTracking() dla read-only
-/// - Projekcja tylko potrzebnych danych
-/// - Eager loading z Include/ThenInclude
+/// Service with advanced LINQ queries
+/// All queries are optimized:
+/// - AsNoTracking() for read-only
+/// - Projection of only required data
+/// - Eager loading with Include/ThenInclude
 /// - Server-side evaluation
 /// </summary>
 public class QueryService : IQueryService
@@ -22,7 +22,7 @@ public class QueryService : IQueryService
     }
 
     /// <summary>
-    /// Zapytanie 1: Professor z największą łączną liczbą studentów
+    /// Query 1: Professor with the largest total number of students
     /// </summary>
     public async Task<ProfessorStudentCountDto?> GetProfessorWithMostStudentsAsync()
     {
@@ -31,11 +31,11 @@ public class QueryService : IQueryService
                 .Select(p => new
                 {
                     Professor = p,
-                    TotalStudents = p.TaughtCourses
-                        .SelectMany(k => k.Enrollments)
+                    TotalStudents = p
+                        .TaughtCourses.SelectMany(k => k.Enrollments)
                         .Select(e => e.StudentId)
                         .Distinct()
-                        .Count()
+                        .Count(),
                 })
                 .Where(x => x.TotalStudents > 0)
                 .OrderByDescending(x => x.TotalStudents)
@@ -45,7 +45,7 @@ public class QueryService : IQueryService
                     FullName = x.Professor.FirstName + " " + x.Professor.LastName,
                     UniversityIndex = x.Professor.UniversityIndex,
                     TotalStudentCount = x.TotalStudents,
-                    CourseCount = x.Professor.TaughtCourses.Count
+                    CourseCount = x.Professor.TaughtCourses.Count,
                 })
                 .Take(1)
         );
@@ -54,7 +54,7 @@ public class QueryService : IQueryService
     }
 
     /// <summary>
-    /// Zapytanie 2: Średnia ocen dla każdego kursu na danym wydziale
+    /// Query 2: Average grades for each course in a given department
     /// </summary>
     public async Task<IEnumerable<CourseAverageDto>> GetCourseAveragesForFacultyAsync(int wydzialId)
     {
@@ -64,7 +64,7 @@ public class QueryService : IQueryService
                 .Select(k => new
                 {
                     Course = k,
-                    Enrollments = k.Enrollments.Where(e => e.Grade.HasValue).ToList()
+                    Enrollments = k.Enrollments.Where(e => e.Grade.HasValue).ToList(),
                 })
                 .Where(x => x.Enrollments.Any())
                 .Select(x => new CourseAverageDto
@@ -73,13 +73,13 @@ public class QueryService : IQueryService
                     CourseName = x.Course.Name,
                     CourseCode = x.Course.CourseCode,
                     AverageGrade = x.Enrollments.Average(e => e.Grade!.Value),
-                    StudentCount = x.Enrollments.Count
+                    StudentCount = x.Enrollments.Count,
                 })
         );
     }
 
     /// <summary>
-    /// Zapytanie 3: Student z najtrudniejszym planem zajęć
+    /// Query 3: Student with the hardest schedule
     /// </summary>
     public async Task<StudentDifficultyDto?> GetStudentWithHardestScheduleAsync()
     {
@@ -90,16 +90,18 @@ public class QueryService : IQueryService
                 {
                     Student = s,
                     CourseEcts = s.Enrollments.Sum(e => e.Course.ECTSPoints),
-                    PrerequisiteEcts = s.Enrollments
-                        .SelectMany(e => e.Course.Prerequisites)
+                    PrerequisiteEcts = s
+                        .Enrollments.SelectMany(e => e.Course.Prerequisites)
                         .Select(p => p.Id)
                         .Distinct()
-                        .Sum(id => students
-                            .SelectMany(st => st.Enrollments)
-                            .Select(e => e.Course)
-                            .Where(k => k.Id == id)
-                            .Select(k => k.ECTSPoints)
-                            .FirstOrDefault())
+                        .Sum(id =>
+                            students
+                                .SelectMany(st => st.Enrollments)
+                                .Select(e => e.Course)
+                                .Where(k => k.Id == id)
+                                .Select(k => k.ECTSPoints)
+                                .FirstOrDefault()
+                        ),
                 })
                 .Select(x => new StudentDifficultyDto
                 {
@@ -108,7 +110,7 @@ public class QueryService : IQueryService
                     UniversityIndex = x.Student.UniversityIndex,
                     CourseECTS = x.CourseEcts,
                     PrerequisiteECTS = x.PrerequisiteEcts,
-                    TotalDifficulty = x.CourseEcts + x.PrerequisiteEcts
+                    TotalDifficulty = x.CourseEcts + x.PrerequisiteEcts,
                 })
                 .OrderByDescending(x => x.TotalDifficulty)
                 .Take(1)

@@ -413,7 +413,7 @@ public class MainViewModel : ViewModelBase
             CurrentColoringModel.Clear();
 
         NotifyStatisticsChanged();
-        // Wymuś natychmiastowe odświeżenie widoku
+        // Force immediate view refresh
         RefreshTrigger++;
     }
 
@@ -426,7 +426,7 @@ public class MainViewModel : ViewModelBase
             CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
 
         NotifyStatisticsChanged();
-        // Wymuś natychmiastowe odświeżenie widoku
+        // Force immediate view refresh
         RefreshTrigger++;
     }
 

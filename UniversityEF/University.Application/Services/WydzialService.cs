@@ -14,10 +14,10 @@ public class DepartmentService : IDepartmentService
 
     public async Task<Department> CreateDepartmentAsync(string nazwa)
     {
-        var wydzial = new Department { Name = nazwa };
-        await _repository.AddDepartmentAsync(wydzial);
+        var department = new Department { Name = nazwa };
+        await _repository.AddDepartmentAsync(department);
         await _repository.SaveChangesAsync();
-        return wydzial;
+        return department;
     }
 
     public async Task<Department?> GetDepartmentByIdAsync(int id)
@@ -30,19 +30,19 @@ public class DepartmentService : IDepartmentService
         return await _repository.GetAllDepartmentsAsync();
     }
 
-    public async Task UpdateDepartmentAsync(Department wydzial)
+    public async Task UpdateDepartmentAsync(Department department)
     {
-        await _repository.UpdateDepartmentAsync(wydzial);
+        await _repository.UpdateDepartmentAsync(department);
         await _repository.SaveChangesAsync();
     }
 
     public async Task DeleteDepartmentAsync(int id)
     {
-        var wydzial = await _repository.GetDepartmentByIdAsync(id);
-        if (wydzial == null)
-            throw new InvalidOperationException($"Wydział o ID {id} nie istnieje.");
+        var department = await _repository.GetDepartmentByIdAsync(id);
+        if (department == null)
+            throw new InvalidOperationException($"Department with ID {id} does not exist.");
 
-        await _repository.DeleteDepartmentAsync(wydzial);
+        await _repository.DeleteDepartmentAsync(department);
         await _repository.SaveChangesAsync();
     }
 }

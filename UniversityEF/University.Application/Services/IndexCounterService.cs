@@ -4,7 +4,7 @@ using University.Domain.Entities;
 namespace University.Application.Services;
 
 /// <summary>
-/// Serwis zarządzający licznikami indeksów
+/// Service that manages index counters
 /// </summary>
 public class IndexCounterService : IIndexCounterService
 {
@@ -16,28 +16,30 @@ public class IndexCounterService : IIndexCounterService
     }
 
     /// <summary>
-    /// Pobiera kolejny numer indeksu dla danego prefiksu (w transakcji)
+    /// Retrieves the next index number for the given prefix (in a transaction)
     /// </summary>
     public async Task<string> GetNextIndexAsync(string prefix)
     {
         await _repository.BeginTransactionAsync();
         try
         {
-            // Pobierz licznik (z blokowaniem dla zapewnienia spójności)
+            // Get counter (with locking for consistency)
             var counter = await _repository.GetIndexCounterAsync(prefix);
 
             if (counter == null)
             {
-                throw new InvalidOperationException($"Licznik dla prefiksu '{prefix}' nie istnieje. Najpierw zainicjalizuj licznik.");
+                throw new InvalidOperationException(
+                    $"Counter for prefix '{prefix}' does not exist. Initialize the counter first."
+                );
             }
 
-            // Zwiększ wartość
+            // Increment value
             counter.CurrentValue++;
             await _repository.UpdateIndexCounterAsync(counter);
             await _repository.SaveChangesAsync();
             await _repository.CommitTransactionAsync();
 
-            // Zwróć sformatowany indeks
+            // Return formatted index
             return $"{prefix}{counter.CurrentValue}";
         }
         catch
@@ -48,7 +50,7 @@ public class IndexCounterService : IIndexCounterService
     }
 
     /// <summary>
-    /// Próbuje zmniejszyć licznik jeśli usuwany indeks jest ostatni w sekwencji
+    /// Attempts to decrement the counter if the removed index was the last in the sequence
     /// </summary>
     public async Task<bool> TryDecrementIndexAsync(string prefix, string currentIndex)
     {
@@ -60,12 +62,12 @@ public class IndexCounterService : IIndexCounterService
             if (counter == null)
                 return false;
 
-            // Wyciągnij numer z indeksu (np. "S1002" -> 1002)
+            // Extract number from the index (e.g. "S1002" -> 1002)
             var numberPart = currentIndex.Substring(prefix.Length);
             if (!int.TryParse(numberPart, out int indexNumber))
                 return false;
 
-            // Sprawdź czy to ostatni numer w sekwencji
+            // Check if this is the last number in the sequence
             if (indexNumber == counter.CurrentValue)
             {
                 counter.CurrentValue--;
@@ -86,7 +88,7 @@ public class IndexCounterService : IIndexCounterService
     }
 
     /// <summary>
-    /// Inicjalizuje nowy licznik
+    /// Initializes a new counter
     /// </summary>
     public async Task InitializeCounterAsync(string prefix, int startValue)
     {
@@ -94,14 +96,10 @@ public class IndexCounterService : IIndexCounterService
 
         if (existingCounter != null)
         {
-            throw new InvalidOperationException($"Licznik dla prefiksu '{prefix}' już istnieje.");
+            throw new InvalidOperationException($"Counter for prefix '{prefix}' already exists.");
         }
 
-        var counter = new IndexCounter
-        {
-            Prefix = prefix,
-            CurrentValue = startValue
-        };
+        var counter = new IndexCounter { Prefix = prefix, CurrentValue = startValue };
 
         await _repository.AddIndexCounterAsync(counter);
         await _repository.SaveChangesAsync();

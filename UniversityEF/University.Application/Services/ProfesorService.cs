@@ -8,29 +8,37 @@ public class ProfessorService : IProfessorService
     private readonly IUniversityRepository _repository;
     private readonly IIndexCounterService _indexCounterService;
 
-    public ProfessorService(IUniversityRepository repository, IIndexCounterService indexCounterService)
+    public ProfessorService(
+        IUniversityRepository repository,
+        IIndexCounterService indexCounterService
+    )
     {
         _repository = repository;
         _indexCounterService = indexCounterService;
     }
 
-    public async Task<Professor> CreateProfessorAsync(string imie, string nazwisko, string tytulNaukowy, Address adres)
+    public async Task<Professor> CreateProfessorAsync(
+        string firstName,
+        string lastName,
+        string academicTitle,
+        Address address
+    )
     {
         var indeks = await _indexCounterService.GetNextIndexAsync("P");
 
-        var profesor = new Professor
+        var professor = new Professor
         {
-            FirstName = imie,
-            LastName = nazwisko,
+            FirstName = firstName,
+            LastName = lastName,
             UniversityIndex = indeks,
-            AcademicTitle = tytulNaukowy,
-            ResidenceAddress = adres
+            AcademicTitle = academicTitle,
+            ResidenceAddress = address,
         };
 
-        await _repository.AddProfessorAsync(profesor);
+        await _repository.AddProfessorAsync(professor);
         await _repository.SaveChangesAsync();
 
-        return profesor;
+        return professor;
     }
 
     public async Task<Professor?> GetProfessorByIdAsync(int id)
@@ -43,42 +51,42 @@ public class ProfessorService : IProfessorService
         return await _repository.GetAllProfessorsAsync();
     }
 
-    public async Task UpdateProfessorAsync(Professor profesor)
+    public async Task UpdateProfessorAsync(Professor professor)
     {
-        await _repository.UpdateProfessorAsync(profesor);
+        await _repository.UpdateProfessorAsync(professor);
         await _repository.SaveChangesAsync();
     }
 
     public async Task DeleteProfessorAsync(int id)
     {
-        var profesor = await _repository.GetProfessorByIdAsync(id);
-        if (profesor == null)
-            throw new InvalidOperationException($"Professor o ID {id} nie istnieje.");
+        var professor = await _repository.GetProfessorByIdAsync(id);
+        if (professor == null)
+            throw new InvalidOperationException($"Professor with ID {id} does not exist.");
 
-        await _indexCounterService.TryDecrementIndexAsync("P", profesor.UniversityIndex);
+        await _indexCounterService.TryDecrementIndexAsync("P", professor.UniversityIndex);
 
-        await _repository.DeleteProfessorAsync(profesor);
+        await _repository.DeleteProfessorAsync(professor);
         await _repository.SaveChangesAsync();
     }
 
-    public async Task AssignOfficeAsync(int profesorId, string numerOfficeu, string budynek)
+    public async Task AssignOfficeAsync(int professorId, string officeNumber, string building)
     {
-        var profesor = await _repository.GetProfessorByIdAsync(profesorId);
+        var professor = await _repository.GetProfessorByIdAsync(professorId);
 
-        if (profesor == null)
-            throw new InvalidOperationException($"Professor o ID {profesorId} nie istnieje.");
+        if (professor == null)
+            throw new InvalidOperationException($"Professor with ID {professorId} does not exist.");
 
-        if (profesor.Office != null)
-            throw new InvalidOperationException($"Professor już ma przypisany gabinet.");
+        if (professor.Office != null)
+            throw new InvalidOperationException($"Professor already has an assigned office.");
 
-        var gabinet = new Office
+        var office = new Office
         {
-            OfficeNumber = numerOfficeu,
-            Building = budynek,
-            ProfessorId = profesorId
+            OfficeNumber = officeNumber,
+            Building = building,
+            ProfessorId = professorId,
         };
 
-        await _repository.AddOfficeAsync(gabinet);
+        await _repository.AddOfficeAsync(office);
         await _repository.SaveChangesAsync();
     }
 }

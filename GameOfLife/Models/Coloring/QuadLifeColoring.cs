@@ -20,7 +20,7 @@ public class QuadLifeColoring : IColoringModel
     public string Name => "QuadLife";
 
     public string Description =>
-        "Four different colors - nowy kolor na podstawie większości sąsiadów";
+        "Four different colors - new color based on the majority of neighbors";
 
     public Color GetCellColor(int x, int y, bool isAlive, int age, int neighbors)
     {

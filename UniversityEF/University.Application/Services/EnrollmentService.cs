@@ -18,13 +18,13 @@ public class EnrollmentService : IEnrollmentService
         var existing = enrollments.FirstOrDefault(e => e.CourseId == kursId);
 
         if (existing != null)
-            throw new InvalidOperationException("Student jest już zapisany na ten kurs.");
+            throw new InvalidOperationException("Student is already enrolled in this course.");
 
         var enrollment = new Enrollment
         {
             StudentId = studentId,
             CourseId = kursId,
-            Semester = semestr
+            Semester = semestr,
         };
 
         await _repository.AddEnrollmentAsync(enrollment);
@@ -37,7 +37,9 @@ public class EnrollmentService : IEnrollmentService
     {
         var enrollment = await _repository.GetEnrollmentByIdAsync(enrollmentId);
         if (enrollment == null)
-            throw new InvalidOperationException($"Enrollment o ID {enrollmentId} nie istnieje.");
+            throw new InvalidOperationException(
+                $"Enrollment with ID {enrollmentId} does not exist."
+            );
 
         enrollment.Grade = ocena;
         await _repository.UpdateEnrollmentAsync(enrollment);
@@ -58,7 +60,9 @@ public class EnrollmentService : IEnrollmentService
     {
         var enrollment = await _repository.GetEnrollmentByIdAsync(enrollmentId);
         if (enrollment == null)
-            throw new InvalidOperationException($"Enrollment o ID {enrollmentId} nie istnieje.");
+            throw new InvalidOperationException(
+                $"Enrollment with ID {enrollmentId} does not exist."
+            );
 
         await _repository.DeleteEnrollmentAsync(enrollment);
         await _repository.SaveChangesAsync();

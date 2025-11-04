@@ -12,21 +12,27 @@ public class CourseService : ICourseService
         _repository = repository;
     }
 
-    public async Task<Course> CreateCourseAsync(string nazwa, string kodCourseu, int punktyECTS, int wydzialId, int? profesorId = null)
+    public async Task<Course> CreateCourseAsync(
+        string name,
+        string courseCode,
+        int ectsPoints,
+        int departmentId,
+        int? professorId = null
+    )
     {
-        var kurs = new Course
+        var course = new Course
         {
-            Name = nazwa,
-            CourseCode = kodCourseu,
-            ECTSPoints = punktyECTS,
-            DepartmentId = wydzialId,
-            ProfessorId = profesorId
+            Name = name,
+            CourseCode = courseCode,
+            ECTSPoints = ectsPoints,
+            DepartmentId = departmentId,
+            ProfessorId = professorId,
         };
 
-        await _repository.AddCourseAsync(kurs);
+        await _repository.AddCourseAsync(course);
         await _repository.SaveChangesAsync();
 
-        return kurs;
+        return course;
     }
 
     public async Task<Course?> GetCourseByIdAsync(int id)
@@ -39,50 +45,50 @@ public class CourseService : ICourseService
         return await _repository.GetAllCoursesAsync();
     }
 
-    public async Task UpdateCourseAsync(Course kurs)
+    public async Task UpdateCourseAsync(Course course)
     {
-        await _repository.UpdateCourseAsync(kurs);
+        await _repository.UpdateCourseAsync(course);
         await _repository.SaveChangesAsync();
     }
 
     public async Task DeleteCourseAsync(int id)
     {
-        var kurs = await _repository.GetCourseByIdAsync(id);
-        if (kurs == null)
-            throw new InvalidOperationException($"Course o ID {id} nie istnieje.");
+        var course = await _repository.GetCourseByIdAsync(id);
+        if (course == null)
+            throw new InvalidOperationException($"Course with ID {id} does not exist.");
 
-        await _repository.DeleteCourseAsync(kurs);
+        await _repository.DeleteCourseAsync(course);
         await _repository.SaveChangesAsync();
     }
 
-    public async Task AddPrerequisiteAsync(int kursId, int prerequisiteId)
+    public async Task AddPrerequisiteAsync(int courseId, int prerequisiteId)
     {
-        var kurs = await _repository.GetCourseByIdAsync(kursId);
+        var course = await _repository.GetCourseByIdAsync(courseId);
         var prerequisite = await _repository.GetCourseByIdAsync(prerequisiteId);
 
-        if (kurs == null || prerequisite == null)
-            throw new InvalidOperationException("Course lub prererekwizyt nie istnieje.");
+        if (course == null || prerequisite == null)
+            throw new InvalidOperationException("Course or prerequisite does not exist.");
 
-        if (!kurs.Prerequisites.Contains(prerequisite))
+        if (!course.Prerequisites.Contains(prerequisite))
         {
-            kurs.Prerequisites.Add(prerequisite);
-            await _repository.UpdateCourseAsync(kurs);
+            course.Prerequisites.Add(prerequisite);
+            await _repository.UpdateCourseAsync(course);
             await _repository.SaveChangesAsync();
         }
     }
 
-    public async Task RemovePrerequisiteAsync(int kursId, int prerequisiteId)
+    public async Task RemovePrerequisiteAsync(int courseId, int prerequisiteId)
     {
-        var kurs = await _repository.GetCourseByIdAsync(kursId);
+        var course = await _repository.GetCourseByIdAsync(courseId);
         var prerequisite = await _repository.GetCourseByIdAsync(prerequisiteId);
 
-        if (kurs == null || prerequisite == null)
-            throw new InvalidOperationException("Course lub prererekwizyt nie istnieje.");
+        if (course == null || prerequisite == null)
+            throw new InvalidOperationException("Course or prerequisite does not exist.");
 
-        if (kurs.Prerequisites.Contains(prerequisite))
+        if (course.Prerequisites.Contains(prerequisite))
         {
-            kurs.Prerequisites.Remove(prerequisite);
-            await _repository.UpdateCourseAsync(kurs);
+            course.Prerequisites.Remove(prerequisite);
+            await _repository.UpdateCourseAsync(course);
             await _repository.SaveChangesAsync();
         }
     }
