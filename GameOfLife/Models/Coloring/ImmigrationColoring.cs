@@ -29,7 +29,6 @@ public class ImmigrationColoring : IColoringModel
 
     public void InitializeColorsForGrid(bool[,] gridState)
     {
-        // Assign random colors to all alive cells
         _cellColors.Clear();
         var random = new Random();
         var width = gridState.GetLength(0);
@@ -46,13 +45,11 @@ public class ImmigrationColoring : IColoringModel
 
     public void OnCellsBorn(List<(int x, int y)> newCells, bool[,] currentState)
     {
-        // Assign color to newly born cells based on majority color of alive neighbors
         var width = currentState.GetLength(0);
         var height = currentState.GetLength(1);
 
         foreach (var (x, y) in newCells)
         {
-            // Count colors of alive neighbors
             var colorCounts = new Dictionary<Color, int>();
 
             for (var dx = -1; dx <= 1; dx++)
@@ -77,7 +74,6 @@ public class ImmigrationColoring : IColoringModel
                 }
             }
 
-            // Find majority color
             var cellColor = _colors[0];
             if (colorCounts.Count > 0)
             {

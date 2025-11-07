@@ -10,9 +10,6 @@ using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace GameOfLife.Services;
 
-/// <summary>
-///     Service for recording the game grid to video using FFMediaToolkit
-/// </summary>
 public class VideoRecorder : IDisposable
 {
     private VideoEncoderSettings? _encoderSettings;
@@ -21,7 +18,6 @@ public class VideoRecorder : IDisposable
 
     static VideoRecorder()
     {
-        // Set FFmpeg path - assumes FFmpeg DLLs are in the application directory
         var appDirectory = AppDomain.CurrentDomain.BaseDirectory;
         FFmpegLoader.FFmpegPath = appDirectory;
     }
@@ -40,13 +36,6 @@ public class VideoRecorder : IDisposable
         StopRecording();
     }
 
-    /// <summary>
-    ///     Start recording to a video file
-    /// </summary>
-    /// <param name="outputPath">Path to the output video file</param>
-    /// <param name="width">Video width in pixels</param>
-    /// <param name="height">Video height in pixels</param>
-    /// <param name="framerate">Frames per second (default: 30)</param>
     public void StartRecording(string outputPath, int width, int height, int framerate = 30)
     {
         if (IsRecording)
@@ -58,14 +47,12 @@ public class VideoRecorder : IDisposable
             FrameCount = 0;
             _recordingStartTime = DateTime.Now;
 
-            // Configure video encoder settings
             _encoderSettings = new VideoEncoderSettings(width, height, framerate, VideoCodec.H264)
             {
                 EncoderPreset = EncoderPreset.Fast,
-                CRF = 17, // Quality (lower = better quality, range: 0-51)
+                CRF = 17,
             };
 
-            // Create media output
             _mediaOutput = MediaBuilder
                 .CreateContainer(outputPath)
                 .WithVideo(_encoderSettings)
@@ -79,9 +66,6 @@ public class VideoRecorder : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Capture a frame from a Visual element
-    /// </summary>
     public unsafe void CaptureFrame(Visual visual, int width, int height)
     {
         if (!IsRecording || _mediaOutput == null || _encoderSettings == null)
@@ -89,7 +73,6 @@ public class VideoRecorder : IDisposable
 
         try
         {
-            // Render the visual to a bitmap
             var renderBitmap = new RenderTargetBitmap(
                 width,
                 height,
@@ -99,7 +82,6 @@ public class VideoRecorder : IDisposable
             );
             renderBitmap.Render(visual);
 
-            // Convert to System.Drawing.Bitmap
             var encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
 
@@ -109,7 +91,6 @@ public class VideoRecorder : IDisposable
 
             using var bitmap = new Bitmap(memoryStream);
 
-            // Create ImageData manually from bitmap
             var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var bitmapData = bitmap.LockBits(
                 rect,
@@ -119,15 +100,12 @@ public class VideoRecorder : IDisposable
 
             try
             {
-                // Calculate the buffer size needed
                 var videoWidth = _encoderSettings.VideoWidth;
                 var videoHeight = _encoderSettings.VideoHeight;
                 var stride = videoWidth * 4; // 4 bytes per pixel for BGRA32
 
-                // Create a byte array for the frame data
                 var frameData = new byte[stride * videoHeight];
 
-                // Copy pixel data from bitmap to frame buffer
                 fixed (byte* dstBuffer = frameData)
                 {
                     var srcPtr = (byte*)bitmapData.Scan0;
@@ -146,7 +124,6 @@ public class VideoRecorder : IDisposable
                         );
                 }
 
-                // Create ImageData from the byte array
                 var imageData = new ImageData(
                     frameData,
                     ImagePixelFormat.Bgra32,
@@ -154,7 +131,6 @@ public class VideoRecorder : IDisposable
                     videoHeight
                 );
 
-                // Write frame to video
                 _mediaOutput.Video.AddFrame(imageData);
                 FrameCount++;
             }
@@ -169,9 +145,6 @@ public class VideoRecorder : IDisposable
         }
     }
 
-    /// <summary>
-    ///     Stop recording and finalize the video file
-    /// </summary>
     public void StopRecording()
     {
         if (!IsRecording)

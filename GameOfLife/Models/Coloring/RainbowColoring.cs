@@ -15,7 +15,6 @@ public class RainbowColoring(int gridWidth = 100, int gridHeight = 100) : IColor
         if (!isAlive)
             return Colors.Black;
 
-        // Create rainbow based on position
         var hue = (double)(x + y) / (gridWidth + gridHeight) * 360;
         return HsvToRgb(hue, 1.0, 1.0);
     }

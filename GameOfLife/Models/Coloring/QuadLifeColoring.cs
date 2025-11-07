@@ -36,7 +36,6 @@ public class QuadLifeColoring : IColoringModel
 
     public void InitializeColorsForGrid(bool[,] gridState)
     {
-        // Assign random colors to all alive cells from the 4 available colors
         _cellColors.Clear();
         var random = new Random();
         var width = gridState.GetLength(0);
@@ -53,13 +52,11 @@ public class QuadLifeColoring : IColoringModel
 
     public void OnCellsBorn(List<(int x, int y)> newCells, bool[,] currentState)
     {
-        // Assign color to newly born cells based on majority color of alive neighbors
         var width = currentState.GetLength(0);
         var height = currentState.GetLength(1);
 
         foreach (var (x, y) in newCells)
         {
-            // Count colors of alive neighbors
             var colorCounts = new Dictionary<Color, int>();
 
             for (var dx = -1; dx <= 1; dx++)
@@ -84,18 +81,14 @@ public class QuadLifeColoring : IColoringModel
                 }
             }
 
-            // Find majority color
             var cellColor = _quadColors[0];
 
             if (colorCounts.Count == 1)
             {
-                // Only one color among neighbors
                 cellColor = colorCounts.Keys.First();
             }
             else if (colorCounts.Count == 4)
             {
-                // All 4 colors present with equal count - assign the remaining/missing color
-                // Find which color is NOT in the neighbors
                 var neighborsWithColor = new HashSet<Color>(colorCounts.Keys);
                 foreach (var color in _quadColors)
                     if (!neighborsWithColor.Contains(color))
@@ -106,7 +99,6 @@ public class QuadLifeColoring : IColoringModel
             }
             else if (colorCounts.Count > 0)
             {
-                // Multiple colors - pick majority
                 var majorityColor = colorCounts.OrderByDescending(kvp => kvp.Value).First();
                 cellColor = majorityColor.Key;
             }

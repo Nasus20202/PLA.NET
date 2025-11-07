@@ -14,7 +14,7 @@ namespace GameOfLife.Controls;
 /// </summary>
 public class GameGrid : FrameworkElement
 {
-    private const double BaseCellSize = 10; // Fixed base cell size
+    private const double BaseCellSize = 10;
 
     public static readonly DependencyProperty EngineProperty = DependencyProperty.Register(
         nameof(Engine),
@@ -74,14 +74,13 @@ public class GameGrid : FrameworkElement
         _visualChildren = new VisualCollection(this) { _backgroundVisual, _cellsVisual };
 
         ClipToBounds = true;
-        Focusable = true; // Enable keyboard/mouse wheel focus
+        Focusable = true;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         MouseMove += OnMouseMove;
         MouseWheel += OnMouseWheel;
         SizeChanged += OnSizeChanged;
         Loaded += OnLoaded;
 
-        // Update grid continuously
         CompositionTarget.Rendering += OnRendering;
     }
 
@@ -227,7 +226,6 @@ public class GameGrid : FrameworkElement
         if (_engine == null)
             return;
 
-        // Set natural size based on engine dimensions and base cell size
         Width = _engine.Width * BaseCellSize;
         Height = _engine.Height * BaseCellSize;
     }
@@ -259,7 +257,6 @@ public class GameGrid : FrameworkElement
             );
         }
 
-        // If no ScrollViewer found, return entire grid
         return new Rect(0, 0, Width, Height);
     }
 

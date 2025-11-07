@@ -94,15 +94,12 @@ public class GameOfLifeEngine
             }
         }
 
-        // Notify coloring model about newly born cells before state swap
         if (coloringModel != null && newBornCells.Count > 0)
             coloringModel.OnCellsBorn(newBornCells, _currentState);
 
-        // Notify coloring model about dead cells
         if (coloringModel != null && deadCells.Count > 0)
             coloringModel.OnCellsDead(deadCells);
 
-        // Swap states
         var temp = _currentState;
         _currentState = _nextState;
         _nextState = temp;
@@ -171,10 +168,8 @@ public class GameOfLifeEngine
             {
                 var patternCell = pattern.Pattern[px, py];
                 if (merge)
-                    // OR operation - preserve existing cells
                     _currentState[gridX, gridY] = _currentState[gridX, gridY] || patternCell;
                 else
-                    // Replace mode
                     _currentState[gridX, gridY] = patternCell;
             }
         }

@@ -15,14 +15,11 @@ public class EntropyColoring : IColoringModel
         if (!isAlive)
             return Colors.Black;
 
-        // Map neighbor count (0-8) to color gradient from Blue to Red
-        // 0 neighbors = Blue (0, 0, 255)
-        // 8 neighbors = Red (255, 0, 0)
-        var ratio = neighbors / 8.0; // 0.0 to 1.0
+        var ratio = neighbors / 8.0;
 
-        var red = (byte)(ratio * 255); // 0 to 255
+        var red = (byte)(ratio * 255);
         byte green = 0;
-        var blue = (byte)((1 - ratio) * 255); // 255 to 0
+        var blue = (byte)((1 - ratio) * 255);
 
         return Color.FromRgb(red, green, blue);
     }

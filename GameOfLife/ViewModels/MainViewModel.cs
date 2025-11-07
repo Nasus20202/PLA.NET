@@ -482,7 +482,6 @@ public class MainViewModel : ViewModelBase
             {
                 var state = GameState.LoadFromFile(dialog.FileName);
 
-                // Resize grid if needed
                 if (state.Width != _engine.Width || state.Height != _engine.Height)
                 {
                     _gridWidth = state.Width;

@@ -31,7 +31,6 @@ public class AgeBasedColoring : IColoringModel
 
     public void InitializeColorsForGrid(bool[,] gridState)
     {
-        // Initialize all alive cells with age 0
         _cellAge.Clear();
         var width = gridState.GetLength(0);
         var height = gridState.GetLength(1);
@@ -44,14 +43,12 @@ public class AgeBasedColoring : IColoringModel
 
     public void OnCellsBorn(List<(int x, int y)> newCells, bool[,] currentState)
     {
-        // Set age 0 for newly born cells
         foreach (var (x, y) in newCells)
             _cellAge[(x, y)] = 0;
     }
 
     public void OnCellsDead(List<(int x, int y)> deadCells)
     {
-        // Remove dead cells from age tracking
         foreach (var (x, y) in deadCells)
         {
             var key = (x, y);
@@ -62,7 +59,6 @@ public class AgeBasedColoring : IColoringModel
 
     public void NextGeneration()
     {
-        // Increment age of all living cells
         foreach (var key in _cellAge.Keys.ToList())
             _cellAge[key]++;
     }

@@ -21,12 +21,10 @@ public partial class MainWindow
 
     private void OnRendering(object? sender, EventArgs e)
     {
-        // Capture frame if recording is active
         if (ViewModel?.GetVideoRecorder()?.IsRecording != true)
             return;
         try
         {
-            // Capture the current frame from the GameGrid control using actual dimensions
             var width = ViewModel.VideoWidth;
             var height = ViewModel.VideoHeight;
 
@@ -34,17 +32,14 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            // Log error but don't stop the application
             Debug.WriteLine($"Frame capture error: {ex.Message}");
         }
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        // Clean up rendering event
         CompositionTarget.Rendering -= OnRendering;
 
-        // Stop recording if still active
         ViewModel?.GetVideoRecorder()?.StopRecording();
 
         base.OnClosed(e);
