@@ -27,7 +27,7 @@ public class MainViewModel : ViewModelBase
     private int _patternY;
     private int _refreshTrigger;
     private string _rulesText;
-    private string _selectedColoringModel = "Standard";
+    private IColoringModel? _selectedColoringModel;
     private string _selectedPattern = "";
     private VideoRecorder? _videoRecorder;
     private double _zoomLevel;
@@ -49,7 +49,6 @@ public class MainViewModel : ViewModelBase
 
         InitializePatterns();
         InitializeColorings();
-        InitializeDefaultColoring();
         InitializeCommands();
         UpdateTimerInterval();
     }
@@ -151,7 +150,7 @@ public class MainViewModel : ViewModelBase
         try
         {
             CurrentColoringModel = ColoringModelFactory.CreateColoring(
-                SelectedColoringModel,
+                SelectedColoringModel?.Name ?? "Standard",
                 _engine.Width,
                 _engine.Height
             );
@@ -164,7 +163,7 @@ public class MainViewModel : ViewModelBase
         catch
         {
             MessageBox.Show(
-                $"Error applying coloring model: {SelectedColoringModel}",
+                $"Error applying coloring model: {SelectedColoringModel?.Name ?? "Unknown"}",
                 "Error",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error
@@ -190,15 +189,6 @@ public class MainViewModel : ViewModelBase
             AvailableColorings.Add(coloring);
         if (AvailableColorings.Count > 0)
             SelectedColoringModel = AvailableColorings[0];
-    }
-
-    private void InitializeDefaultColoring()
-    {
-        CurrentColoringModel = ColoringModelFactory.CreateColoring(
-            "Standard",
-            _engine.Width,
-            _engine.Height
-        );
     }
 
     #region Properties
@@ -292,7 +282,7 @@ public class MainViewModel : ViewModelBase
 
     public ObservableCollection<string> AvailablePatterns { get; } = new();
 
-    public ObservableCollection<string> AvailableColorings { get; } = new();
+    public ObservableCollection<IColoringModel> AvailableColorings { get; } = new();
 
     public string SelectedPattern
     {
@@ -300,10 +290,16 @@ public class MainViewModel : ViewModelBase
         set => SetProperty(ref _selectedPattern, value);
     }
 
-    public string SelectedColoringModel
+    public IColoringModel? SelectedColoringModel
     {
         get => _selectedColoringModel;
-        set => SetProperty(ref _selectedColoringModel, value);
+        set
+        {
+            if (SetProperty(ref _selectedColoringModel, value))
+            {
+                ChangeColoring();
+            }
+        }
     }
 
     public int PatternX
@@ -484,7 +480,9 @@ public class MainViewModel : ViewModelBase
                 OnPropertyChanged(nameof(Engine));
             }
             // Restore coloring model
-            SelectedColoringModel = state.ColoringModelName;
+            SelectedColoringModel = AvailableColorings.FirstOrDefault(c =>
+                c.Name == state.ColoringModelName
+            );
             CurrentColoringModel = ColoringModelFactory.CreateColoring(
                 state.ColoringModelName,
                 _engine.Width,

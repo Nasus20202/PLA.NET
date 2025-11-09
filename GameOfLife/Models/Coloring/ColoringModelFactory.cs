@@ -39,8 +39,8 @@ public static class ColoringModelFactory
             : new StandardColoring();
     }
 
-    public static List<string> GetAvailableColorings()
+    public static List<IColoringModel> GetAvailableColorings()
     {
-        return Enum.GetValues<ColoringModelType>().Select(type => type.ToString()).ToList();
+        return Enum.GetValues<ColoringModelType>().Select(type => CreateColoring(type)).ToList();
     }
 }

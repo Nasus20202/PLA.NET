@@ -835,55 +835,16 @@
               <ComboBox
                 ItemsSource="{Binding AvailableColorings}"
                 SelectedItem="{Binding SelectedColoringModel}"
+                DisplayMemberPath="Name"
                 Style="{StaticResource DarkComboBoxStyle}"
                 ItemContainerStyle="{StaticResource DarkComboBoxItemStyle}"
               />
               <TextBlock
-                Text="Available:"
+                Text="{Binding SelectedColoringModel.Description}"
                 Style="{StaticResource ModernLabelStyle}"
-                Margin="0,10,0,5"
+                Margin="0,5,0,0"
                 FontSize="11"
-              />
-              <TextBlock
-                Text="• Standard - Black &amp; white"
-                Style="{StaticResource ModernLabelStyle}"
-                Margin="5,2,0,2"
-                FontSize="11"
-                Foreground="#FFAAAAAA"
-              />
-              <TextBlock
-                Text="• Immigration - Color by origin"
-                Style="{StaticResource ModernLabelStyle}"
-                Margin="5,2,0,2"
-                FontSize="11"
-                Foreground="#FFAAAAAA"
-              />
-              <TextBlock
-                Text="• QuadLife - Four colors"
-                Style="{StaticResource ModernLabelStyle}"
-                Margin="5,2,0,2"
-                FontSize="11"
-                Foreground="#FFAAAAAA"
-              />
-              <TextBlock
-                Text="• Entropy - Color by neighbors"
-                Style="{StaticResource ModernLabelStyle}"
-                Margin="5,2,0,2"
-                FontSize="11"
-                Foreground="#FFAAAAAA"
-              />
-              <TextBlock
-                Text="• Rainbow - Position-based colors"
-                Style="{StaticResource ModernLabelStyle}"
-                Margin="5,2,0,5"
-                FontSize="11"
-                Foreground="#FFAAAAAA"
-              />
-              <Button
-                Content="🎨 Apply Coloring"
-                Command="{Binding ChangeColoringCommand}"
-                Style="{StaticResource ModernButtonStyle}"
-                Margin="0,10,0,0"
+                TextWrapping="Wrap"
               />
             </StackPanel>
           </Border>
