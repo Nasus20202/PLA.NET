@@ -2,9 +2,6 @@
 
 namespace GameOfLife.Models.Coloring;
 
-/// <summary>
-///     QuadLife coloring - uses four states/colors, similar to Immigration but with 4 colors
-/// </summary>
 public class QuadLifeColoring : IColoringModel
 {
     private readonly Dictionary<(int, int), Color> _cellColors = new();
@@ -28,10 +25,7 @@ public class QuadLifeColoring : IColoringModel
             return Colors.Black;
 
         var key = (x, y);
-        if (_cellColors.ContainsKey(key))
-            return _cellColors[key];
-
-        return _quadColors[0]; // Default to Red if not found
+        return _cellColors.TryGetValue(key, out var color) ? color : _quadColors[0]; // Default to Red if not found
     }
 
     public void InitializeColorsForGrid(bool[,] gridState)
@@ -68,39 +62,42 @@ public class QuadLifeColoring : IColoringModel
                 var nx = x + dx;
                 var ny = y + dy;
 
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height && currentState[nx, ny])
-                {
-                    var key = (nx, ny);
-                    var neighborColor = _cellColors.ContainsKey(key)
-                        ? _cellColors[key]
-                        : _quadColors[0];
+                if (nx < 0 || nx >= width || ny < 0 || ny >= height || !currentState[nx, ny])
+                    continue;
+                var key = (nx, ny);
+                var neighborColor = _cellColors.TryGetValue(key, out var color)
+                    ? color
+                    : _quadColors[0];
 
-                    if (!colorCounts.ContainsKey(neighborColor))
-                        colorCounts[neighborColor] = 0;
-                    colorCounts[neighborColor]++;
-                }
+                colorCounts.TryAdd(neighborColor, 0);
+                colorCounts[neighborColor]++;
             }
 
             var cellColor = _quadColors[0];
 
-            if (colorCounts.Count == 1)
+            switch (colorCounts.Count)
             {
-                cellColor = colorCounts.Keys.First();
-            }
-            else if (colorCounts.Count == 4)
-            {
-                var neighborsWithColor = new HashSet<Color>(colorCounts.Keys);
-                foreach (var color in _quadColors)
-                    if (!neighborsWithColor.Contains(color))
-                    {
-                        cellColor = color;
-                        break;
-                    }
-            }
-            else if (colorCounts.Count > 0)
-            {
-                var majorityColor = colorCounts.OrderByDescending(kvp => kvp.Value).First();
-                cellColor = majorityColor.Key;
+                case 1:
+                    cellColor = colorCounts.Keys.First();
+                    break;
+                case 4:
+                {
+                    var neighborsWithColor = new HashSet<Color>(colorCounts.Keys);
+                    foreach (var color in _quadColors)
+                        if (!neighborsWithColor.Contains(color))
+                        {
+                            cellColor = color;
+                            break;
+                        }
+
+                    break;
+                }
+                case > 0:
+                {
+                    var majorityColor = colorCounts.OrderByDescending(kvp => kvp.Value).First();
+                    cellColor = majorityColor.Key;
+                    break;
+                }
             }
 
             _cellColors[(x, y)] = cellColor;
@@ -118,13 +115,11 @@ public class QuadLifeColoring : IColoringModel
 
     public List<string> Serialize()
     {
-        var data = new List<string>();
-        foreach (var kvp in _cellColors)
-        {
-            var color = kvp.Value;
-            data.Add($"{kvp.Key.Item1},{kvp.Key.Item2}:{color.R},{color.G},{color.B}");
-        }
-        return data;
+        return (
+            from kvp in _cellColors
+            let color = kvp.Value
+            select $"{kvp.Key.Item1},{kvp.Key.Item2}:{color.R},{color.G},{color.B}"
+        ).ToList();
     }
 
     public void Deserialize(List<string> data)
@@ -133,20 +128,18 @@ public class QuadLifeColoring : IColoringModel
         foreach (var line in data)
         {
             var parts = line.Split(':');
-            if (parts.Length == 2)
-            {
-                var coords = parts[0].Split(',');
-                var rgb = parts[1].Split(',');
-                if (coords.Length == 2 && rgb.Length == 3)
-                {
-                    var x = int.Parse(coords[0]);
-                    var y = int.Parse(coords[1]);
-                    var r = byte.Parse(rgb[0]);
-                    var g = byte.Parse(rgb[1]);
-                    var b = byte.Parse(rgb[2]);
-                    _cellColors[(x, y)] = Color.FromRgb(r, g, b);
-                }
-            }
+            if (parts.Length != 2)
+                continue;
+            var coords = parts[0].Split(',');
+            var rgb = parts[1].Split(',');
+            if (coords.Length != 2 || rgb.Length != 3)
+                continue;
+            var x = int.Parse(coords[0]);
+            var y = int.Parse(coords[1]);
+            var r = byte.Parse(rgb[0]);
+            var g = byte.Parse(rgb[1]);
+            var b = byte.Parse(rgb[2]);
+            _cellColors[(x, y)] = Color.FromRgb(r, g, b);
         }
     }
 }

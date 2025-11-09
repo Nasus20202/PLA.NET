@@ -1,10 +1,7 @@
-﻿﻿using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
-/// <summary>
-///     Entropy-based coloring - colors based on neighbor count
-/// </summary>
 public class EntropyColoring : IColoringModel
 {
     public string Name => "Entropy";
@@ -18,7 +15,7 @@ public class EntropyColoring : IColoringModel
         var ratio = neighbors / 8.0;
 
         var red = (byte)(ratio * 255);
-        byte green = 0;
+        const byte green = 0;
         var blue = (byte)((1 - ratio) * 255);
 
         return Color.FromRgb(red, green, blue);
@@ -36,11 +33,8 @@ public class EntropyColoring : IColoringModel
 
     public List<string> Serialize()
     {
-        return new List<string>(); // No state to serialize
+        return [];
     }
 
-    public void Deserialize(List<string> data)
-    {
-        // No state to deserialize
-    }
+    public void Deserialize(List<string> data) { }
 }

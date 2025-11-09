@@ -9,10 +9,6 @@ using GameOfLife.ViewModels;
 
 namespace GameOfLife.Controls;
 
-/// <summary>
-///     Custom control for rendering and interacting with the Game of Life grid
-///     Optimized version using DrawingVisual for low memory usage with viewport culling
-/// </summary>
 public class GameGrid : FrameworkElement
 {
     private const double BaseCellSize = 10;
@@ -65,7 +61,6 @@ public class GameGrid : FrameworkElement
     private GameOfLifeEngine? _engine;
     private bool _forceRender;
     private long _lastGeneration = -1;
-    private int _renderSkipCounter;
     private MainViewModel? _viewModel;
 
     public GameGrid()
@@ -125,7 +120,6 @@ public class GameGrid : FrameworkElement
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        // Find and attach to parent ScrollViewer's ScrollChanged event
         var parent = VisualTreeHelper.GetParent(this);
         while (parent != null && parent is not ScrollViewer)
             parent = VisualTreeHelper.GetParent(parent);
@@ -136,52 +130,40 @@ public class GameGrid : FrameworkElement
 
     private void OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
-        // Force re-render when scrolling to update visible cells
         _forceRender = true;
     }
 
     protected override Visual GetVisualChild(int index)
     {
-        if (_visualChildren == null)
-            throw new ArgumentOutOfRangeException(nameof(index));
-        return _visualChildren[index];
+        return _visualChildren == null
+            ? throw new ArgumentOutOfRangeException(nameof(index))
+            : _visualChildren[index];
     }
 
     private void OnRendering(object? sender, EventArgs e)
     {
-        if (_engine != null && _cellsVisual != null)
-        {
-            // Throttle rendering - render every 2-3 frames instead of 60 FPS
-            _renderSkipCounter++;
-            if (_renderSkipCounter < 2 && !_forceRender)
-                return;
-
-            _renderSkipCounter = 0;
-
-            // Update when generation changes OR when forced
-            if (_lastGeneration != _engine.Generation || _forceRender)
-            {
-                _lastGeneration = _engine.Generation;
-                _forceRender = false;
-                RenderGrid();
-            }
-        }
+        if (_engine == null || _cellsVisual == null)
+            return;
+        if (_lastGeneration == _engine.Generation && !_forceRender)
+            return;
+        _lastGeneration = _engine.Generation;
+        _forceRender = false;
+        RenderGrid();
     }
 
     private static void OnEngineChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is GameGrid grid)
-        {
-            grid._engine = e.NewValue as GameOfLifeEngine;
-            grid._forceRender = true;
-            grid.Dispatcher.BeginInvoke(
-                new Action(() =>
-                {
-                    grid.RebuildGrid();
-                }),
-                DispatcherPriority.Loaded
-            );
-        }
+        if (d is not GameGrid grid)
+            return;
+        grid._engine = e.NewValue as GameOfLifeEngine;
+        grid._forceRender = true;
+        grid.Dispatcher.BeginInvoke(
+            new Action(() =>
+            {
+                grid.RebuildGrid();
+            }),
+            DispatcherPriority.Loaded
+        );
     }
 
     private static void OnVisualPropertyChanged(
@@ -233,32 +215,25 @@ public class GameGrid : FrameworkElement
 
     private Rect GetVisibleBounds()
     {
-        // Find the parent ScrollViewer to get viewport bounds
         var parent = VisualTreeHelper.GetParent(this);
         while (parent != null && parent is not ScrollViewer)
             parent = VisualTreeHelper.GetParent(parent);
 
-        if (parent is ScrollViewer scrollViewer)
-        {
-            // Get the viewport in the ScrollViewer's coordinate space (zoomed space)
-            var viewportWidth = scrollViewer.ViewportWidth;
-            var viewportHeight = scrollViewer.ViewportHeight;
-            var horizontalOffset = scrollViewer.HorizontalOffset;
-            var verticalOffset = scrollViewer.VerticalOffset;
+        if (parent is not ScrollViewer scrollViewer)
+            return new Rect(0, 0, Width, Height);
+        var viewportWidth = scrollViewer.ViewportWidth;
+        var viewportHeight = scrollViewer.ViewportHeight;
+        var horizontalOffset = scrollViewer.HorizontalOffset;
+        var verticalOffset = scrollViewer.VerticalOffset;
 
-            // The ScrollViewer offsets and viewport are in the TRANSFORMED (zoomed) coordinate space
-            // We need to convert back to the untransformed space by dividing by zoom level
-            var zoom = ZoomLevel;
+        var zoom = ZoomLevel;
 
-            return new Rect(
-                horizontalOffset / zoom,
-                verticalOffset / zoom,
-                viewportWidth / zoom,
-                viewportHeight / zoom
-            );
-        }
-
-        return new Rect(0, 0, Width, Height);
+        return new Rect(
+            horizontalOffset / zoom,
+            verticalOffset / zoom,
+            viewportWidth / zoom,
+            viewportHeight / zoom
+        );
     }
 
     private void UpdateZoom()
@@ -266,14 +241,10 @@ public class GameGrid : FrameworkElement
         if (_engine == null)
             return;
 
-        // Update base dimensions first
         UpdateDimensions();
 
-        // Apply zoom transformation using LayoutTransform for proper ScrollViewer interaction
-        // LayoutTransform affects the layout system, so ScrollViewer will see the correct size
         LayoutTransform = new ScaleTransform(ZoomLevel, ZoomLevel);
 
-        // Force re-render with new zoom
         _forceRender = true;
     }
 
@@ -284,7 +255,6 @@ public class GameGrid : FrameworkElement
 
         _lastGeneration = -1;
 
-        // Update dimensions
         UpdateDimensions();
 
         // Render background
@@ -297,7 +267,6 @@ public class GameGrid : FrameworkElement
             );
         }
 
-        // Apply zoom and render
         UpdateZoom();
     }
 
@@ -308,7 +277,6 @@ public class GameGrid : FrameworkElement
 
         using (var dc = _cellsVisual.RenderOpen())
         {
-            // Background is on a separate layer, just draw the cells
             RenderVisibleCells(dc);
         }
     }
@@ -318,7 +286,6 @@ public class GameGrid : FrameworkElement
         if (_engine == null)
             return;
 
-        // Get visible viewport bounds
         var visibleBounds = GetVisibleBounds();
 
         // Calculate which cells are visible (add margin for smooth scrolling)
@@ -331,10 +298,8 @@ public class GameGrid : FrameworkElement
             (int)(visibleBounds.Bottom / BaseCellSize) + margin + 1
         );
 
-        // Determine if we should use ColoringModel (only if it's not Standard coloring)
         var useColoringModel = ColoringModel != null && ColoringModel.Name != "Standard";
 
-        // Batch rendering for single-color cells (Rectangle shape with CellColor and no special coloring)
         if (CellShape == "Rectangle" && !useColoringModel)
         {
             var geometry = new GeometryGroup();
@@ -353,7 +318,6 @@ public class GameGrid : FrameworkElement
         }
         else
         {
-            // For color-varying cells or non-standard shapes, draw individually
             for (var x = startX; x < endX; x++)
             for (var y = startY; y < endY; y++)
                 if (_engine.GetCell(x, y))
@@ -407,10 +371,15 @@ public class GameGrid : FrameworkElement
 
     private void OnMouseMove(object sender, MouseEventArgs e)
     {
-        if (e.LeftButton == MouseButtonState.Pressed && IsMouseCaptured)
-            HandleMouseInteraction(e.GetPosition(this));
-        else if (e.LeftButton == MouseButtonState.Released)
-            ReleaseMouseCapture();
+        switch (e.LeftButton)
+        {
+            case MouseButtonState.Pressed when IsMouseCaptured:
+                HandleMouseInteraction(e.GetPosition(this));
+                break;
+            case MouseButtonState.Released:
+                ReleaseMouseCapture();
+                break;
+        }
     }
 
     private void OnMouseWheel(object sender, MouseWheelEventArgs e)
@@ -422,18 +391,13 @@ public class GameGrid : FrameworkElement
                 return;
         }
 
-        // Calculate zoom change based on wheel delta
-        // Positive delta = zoom in, negative = zoom out
         var zoomDelta = e.Delta > 0 ? 0.1 : -0.1;
         var newZoom = _viewModel.ZoomLevel + zoomDelta;
 
-        // Clamp zoom between 0.5 and 5.0 for reasonable limits
         newZoom = Math.Max(0.5, Math.Min(5.0, newZoom));
 
-        // Update the view model's zoom level
         _viewModel.ZoomLevel = newZoom;
 
-        // Mark as handled so parent controls don't also process it
         e.Handled = true;
     }
 
@@ -449,8 +413,6 @@ public class GameGrid : FrameworkElement
                 return;
         }
 
-        // Since we use LayoutTransform, the position is already in the transformed coordinate space
-        // We just need to divide by BaseCellSize
         var x = (int)(position.X / BaseCellSize);
         var y = (int)(position.Y / BaseCellSize);
 

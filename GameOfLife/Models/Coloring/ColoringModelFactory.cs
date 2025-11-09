@@ -1,14 +1,8 @@
 ﻿namespace GameOfLife.Models.Coloring;
 
-/// <summary>
-///     Factory for creating coloring models
-/// </summary>
-public class ColoringModelFactory
+public static class ColoringModelFactory
 {
-    /// <summary>
-    ///     Enum for available coloring models
-    /// </summary>
-    public enum ColoringModelType
+    private enum ColoringModelType
     {
         Standard,
         Immigration,
@@ -17,7 +11,7 @@ public class ColoringModelFactory
         Rainbow,
     }
 
-    public static IColoringModel CreateColoring(
+    private static IColoringModel CreateColoring(
         ColoringModelType type,
         int gridWidth = 100,
         int gridHeight = 100
@@ -40,9 +34,9 @@ public class ColoringModelFactory
         int gridHeight = 100
     )
     {
-        if (Enum.TryParse<ColoringModelType>(name, out var type))
-            return CreateColoring(type, gridWidth, gridHeight);
-        return new StandardColoring();
+        return Enum.TryParse<ColoringModelType>(name, out var type)
+            ? CreateColoring(type, gridWidth, gridHeight)
+            : new StandardColoring();
     }
 
     public static List<string> GetAvailableColorings()

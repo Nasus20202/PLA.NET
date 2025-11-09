@@ -9,9 +9,6 @@ using Microsoft.Win32;
 
 namespace GameOfLife.ViewModels;
 
-/// <summary>
-///     Main ViewModel for the Game of Life application
-/// </summary>
 public class MainViewModel : ViewModelBase
 {
     private readonly DispatcherTimer _timer;
@@ -84,16 +81,13 @@ public class MainViewModel : ViewModelBase
     {
         _engine.NextGeneration(CurrentColoringModel);
 
-        // Update coloring model state (e.g., age increments)
-        if (CurrentColoringModel != null)
-            CurrentColoringModel.NextGeneration();
+        CurrentColoringModel?.NextGeneration();
 
         NotifyStatisticsChanged();
     }
 
     private void UpdateTimerInterval()
     {
-        // AnimationSpeed is from 1-200, convert to milliseconds (inverse relationship)
         var interval = Math.Max(10, 210 - AnimationSpeed);
         _timer.Interval = TimeSpan.FromMilliseconds(interval);
     }
@@ -111,14 +105,12 @@ public class MainViewModel : ViewModelBase
 
     public void ToggleCell(int x, int y)
     {
-        if (!IsRunning)
-        {
-            var wasAlive = _engine.GetCell(x, y);
-            _engine.ToggleCell(x, y);
+        if (IsRunning)
+            return;
+        _engine.ToggleCell(x, y);
 
-            OnPropertyChanged(nameof(Engine));
-            OnPropertyChanged(nameof(LivingCells));
-        }
+        OnPropertyChanged(nameof(Engine));
+        OnPropertyChanged(nameof(LivingCells));
     }
 
     private void PlacePattern()
@@ -127,19 +119,23 @@ public class MainViewModel : ViewModelBase
             return;
 
         var patterns = PresetPatterns.GetAllPatterns();
-        if (!patterns.ContainsKey(SelectedPattern))
+        if (!patterns.TryGetValue(SelectedPattern, out var pattern))
             return;
 
         try
         {
-            var pattern = patterns[SelectedPattern];
             _engine.PlacePattern(pattern, PatternX, PatternY, PatternMergeMode);
             NotifyStatisticsChanged();
             RefreshTrigger++;
         }
-        catch
+        catch (Exception e)
         {
-            // Silently handle errors
+            MessageBox.Show(
+                $"Error placing pattern: {e.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
         }
     }
 
@@ -154,14 +150,12 @@ public class MainViewModel : ViewModelBase
     {
         try
         {
-            // Create the appropriate coloring model based on selection
             CurrentColoringModel = ColoringModelFactory.CreateColoring(
                 SelectedColoringModel,
                 _engine.Width,
                 _engine.Height
             );
 
-            // Initialize colors for the current grid state
             CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
 
             // Force re-render to apply new coloring
@@ -169,11 +163,16 @@ public class MainViewModel : ViewModelBase
         }
         catch
         {
-            // Silently handle errors
+            MessageBox.Show(
+                $"Error applying coloring model: {SelectedColoringModel}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
         }
     }
 
-    public void InitializePatterns()
+    private void InitializePatterns()
     {
         var patterns = PresetPatterns.GetAllPatterns();
         AvailablePatterns.Clear();
@@ -183,7 +182,7 @@ public class MainViewModel : ViewModelBase
             SelectedPattern = AvailablePatterns[0];
     }
 
-    public void InitializeColorings()
+    private void InitializeColorings()
     {
         var colorings = ColoringModelFactory.GetAvailableColorings();
         AvailableColorings.Clear();
@@ -193,7 +192,7 @@ public class MainViewModel : ViewModelBase
             SelectedColoringModel = AvailableColorings[0];
     }
 
-    public void InitializeDefaultColoring()
+    private void InitializeDefaultColoring()
     {
         CurrentColoringModel = ColoringModelFactory.CreateColoring(
             "Standard",
@@ -332,7 +331,7 @@ public class MainViewModel : ViewModelBase
     }
 
     public ObservableCollection<string> AvailableShapes { get; } =
-        new() { "Rectangle", "Ellipse", "RoundedRectangle" };
+    ["Rectangle", "Ellipse", "RoundedRectangle"];
 
     public string StatusText => IsRunning ? "Running" : "Editing";
 
@@ -390,9 +389,7 @@ public class MainViewModel : ViewModelBase
         ApplyRules();
         _engine.NextGeneration(CurrentColoringModel);
 
-        // Update coloring model state (e.g., age increments)
-        if (CurrentColoringModel != null)
-            CurrentColoringModel.NextGeneration();
+        CurrentColoringModel?.NextGeneration();
 
         NotifyStatisticsChanged();
     }
@@ -401,12 +398,9 @@ public class MainViewModel : ViewModelBase
     {
         _engine.Clear();
 
-        // Clear coloring model state as well
-        if (CurrentColoringModel != null)
-            CurrentColoringModel.Clear();
+        CurrentColoringModel?.Clear();
 
         NotifyStatisticsChanged();
-        // Force immediate view refresh
         RefreshTrigger++;
     }
 
@@ -414,12 +408,10 @@ public class MainViewModel : ViewModelBase
     {
         _engine.Randomize();
 
-        // Initialize colors for the randomized grid if using a coloring model that tracks state
-        if (CurrentColoringModel != null)
-            CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
+        CurrentColoringModel?.InitializeColorsForGrid(_engine.GetStateCopy());
 
         NotifyStatisticsChanged();
-        // Force immediate view refresh
+
         RefreshTrigger++;
     }
 
@@ -433,38 +425,39 @@ public class MainViewModel : ViewModelBase
             FileName = $"gameoflife_{DateTime.Now:yyyyMMdd_HHmmss}.gol",
         };
 
-        if (dialog.ShowDialog() == true)
-            try
+        if (dialog.ShowDialog() != true)
+            return;
+        try
+        {
+            var state = new GameState(
+                _engine.Width,
+                _engine.Height,
+                _engine.GetStateCopy(),
+                _engine.Rules,
+                _engine.Generation
+            )
             {
-                var state = new GameState(
-                    _engine.Width,
-                    _engine.Height,
-                    _engine.GetStateCopy(),
-                    _engine.Rules,
-                    _engine.Generation
-                );
+                ColoringModelName = CurrentColoringModel?.Name ?? "Standard",
+                ColoringData = CurrentColoringModel?.Serialize() ?? new List<string>(),
+            };
 
-                // Save coloring model information
-                state.ColoringModelName = CurrentColoringModel?.Name ?? "Standard";
-                state.ColoringData = CurrentColoringModel?.Serialize() ?? new List<string>();
-
-                state.SaveToFile(dialog.FileName);
-                MessageBox.Show(
-                    "Game state saved successfully!",
-                    "Success",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Error saving file: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                );
-            }
+            state.SaveToFile(dialog.FileName);
+            MessageBox.Show(
+                "Game state saved successfully!",
+                "Success",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information
+            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Error saving file: {ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
     }
 
     private void Load()
@@ -475,83 +468,57 @@ public class MainViewModel : ViewModelBase
                 "Game of Life files (*.gol)|*.gol|Text files (*.txt)|*.txt|All files (*.*)|*.*",
         };
 
-        if (dialog.ShowDialog() == true)
-            try
+        if (dialog.ShowDialog() != true)
+            return;
+        try
+        {
+            var state = GameState.LoadFromFile(dialog.FileName);
+
+            if (state.Width != _engine.Width || state.Height != _engine.Height)
             {
-                var state = GameState.LoadFromFile(dialog.FileName);
-
-                if (state.Width != _engine.Width || state.Height != _engine.Height)
-                {
-                    _gridWidth = state.Width;
-                    _gridHeight = state.Height;
-                    _engine = new GameOfLifeEngine(state.Width, state.Height, state.Rules);
-                    OnPropertyChanged(nameof(GridWidth));
-                    OnPropertyChanged(nameof(GridHeight));
-                    OnPropertyChanged(nameof(Engine));
-                }
-                // Restore coloring model
-                SelectedColoringModel = state.ColoringModelName;
-                CurrentColoringModel = ColoringModelFactory.CreateColoring(
-                    state.ColoringModelName,
-                    _engine.Width,
-                    _engine.Height
-                );
-
-                // Restore coloring model state
-                if (state.ColoringData.Count > 0)
-                {
-                    CurrentColoringModel.Deserialize(state.ColoringData);
-                }
-                else
-                {
-                    // If no saved coloring data, initialize with current state
-                    CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
-                }
-
-
-                _engine.SetState(state.Cells);
-                _engine.Rules = state.Rules;
-                RulesText = state.Rules.ToString();
-
-                // Restore coloring model
-                SelectedColoringModel = state.ColoringModelName;
-                CurrentColoringModel = ColoringModelFactory.CreateColoring(
-                    state.ColoringModelName,
-                    _engine.Width,
-                    _engine.Height
-                );
-
-                // Restore coloring model state
-                if (state.ColoringData.Count > 0)
-                {
-                    CurrentColoringModel.Deserialize(state.ColoringData);
-                }
-                else
-                {
-                    // If no saved coloring data, initialize with current state
-                    CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
-                }
-
-                NotifyStatisticsChanged();
-                // Force immediate screen refresh
-                RefreshTrigger++;
-
-                MessageBox.Show(
-                    "Game state loaded successfully!",
-                    "Success",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information
-                );
+                _gridWidth = state.Width;
+                _gridHeight = state.Height;
+                _engine = new GameOfLifeEngine(state.Width, state.Height, state.Rules);
+                OnPropertyChanged(nameof(GridWidth));
+                OnPropertyChanged(nameof(GridHeight));
+                OnPropertyChanged(nameof(Engine));
             }
-            catch (Exception ex)
+            // Restore coloring model
+            SelectedColoringModel = state.ColoringModelName;
+            CurrentColoringModel = ColoringModelFactory.CreateColoring(
+                state.ColoringModelName,
+                _engine.Width,
+                _engine.Height
+            );
+
+            if (state.ColoringData.Count > 0)
             {
-                MessageBox.Show(
-                    $"Error loading file: {ex.Message}",
-                    "Error",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error
-                );
+                CurrentColoringModel.Deserialize(state.ColoringData);
             }
+            else
+            {
+                CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
+            }
+
+            NotifyStatisticsChanged();
+            RefreshTrigger++;
+
+            MessageBox.Show(
+                "Game state loaded successfully!",
+                "Success",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information
+            );
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                $"Error loading file: {ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
     }
 
     private void ApplyRules()
@@ -612,23 +579,19 @@ public class MainViewModel : ViewModelBase
                 FileName = $"gameoflife_{DateTime.Now:yyyyMMdd_HHmmss}.mp4",
             };
 
-            if (dialog.ShowDialog() == true)
-            {
-                // Initialize video recorder
-                _videoRecorder = new VideoRecorder();
+            if (dialog.ShowDialog() != true)
+                return;
+            _videoRecorder = new VideoRecorder();
 
-                // Fixed 1080p output - FFmpeg will scale the input
-                VideoWidth = 1920;
-                VideoHeight = 1080;
+            // Fixed 1080p output - FFmpeg will scale the input
+            VideoWidth = 1920;
+            VideoHeight = 1080;
 
-
-                _videoRecorder.StartRecording(dialog.FileName, VideoWidth, VideoHeight, 15);
-                IsRecording = true;
-            }
+            _videoRecorder.StartRecording(dialog.FileName, VideoWidth, VideoHeight, 15);
+            IsRecording = true;
         }
         catch
         {
-            // Silently handle errors
             IsRecording = false;
             _videoRecorder?.Dispose();
             _videoRecorder = null;
@@ -647,9 +610,14 @@ public class MainViewModel : ViewModelBase
                 IsRecording = false;
             }
         }
-        catch
+        catch (Exception e)
         {
-            // Silently handle errors
+            MessageBox.Show(
+                $"Error stopping recording: {e.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
         }
         finally
         {

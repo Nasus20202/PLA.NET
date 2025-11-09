@@ -3,9 +3,6 @@ using System.Runtime.CompilerServices;
 
 namespace GameOfLife.ViewModels;
 
-/// <summary>
-///     Base class for ViewModels implementing INotifyPropertyChanged
-/// </summary>
 public abstract class ViewModelBase : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;

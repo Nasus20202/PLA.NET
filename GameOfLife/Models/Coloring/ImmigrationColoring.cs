@@ -1,14 +1,11 @@
-﻿﻿using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
-/// <summary>
-///     Immigration variant - cells have colors based on which neighbor caused them to be born
-/// </summary>
 public class ImmigrationColoring : IColoringModel
 {
     private readonly Dictionary<(int, int), Color> _cellColors = new();
-    private readonly Color[] _colors = new[] { Colors.Red, Colors.Yellow };
+    private readonly Color[] _colors = [Colors.Red, Colors.Yellow];
 
     public string Name => "Immigration";
 
@@ -21,10 +18,7 @@ public class ImmigrationColoring : IColoringModel
             return Colors.Black;
 
         var key = (x, y);
-        if (_cellColors.ContainsKey(key))
-            return _cellColors[key];
-
-        return _colors[0];
+        return _cellColors.TryGetValue(key, out var color) ? color : _colors[0];
     }
 
     public void InitializeColorsForGrid(bool[,] gridState)
@@ -61,17 +55,15 @@ public class ImmigrationColoring : IColoringModel
                 var nx = x + dx;
                 var ny = y + dy;
 
-                if (nx >= 0 && nx < width && ny >= 0 && ny < height && currentState[nx, ny])
-                {
-                    var key = (nx, ny);
-                    var neighborColor = _cellColors.ContainsKey(key)
-                        ? _cellColors[key]
-                        : _colors[0];
+                if (nx < 0 || nx >= width || ny < 0 || ny >= height || !currentState[nx, ny])
+                    continue;
+                var key = (nx, ny);
+                var neighborColor = _cellColors.TryGetValue(key, out var color)
+                    ? color
+                    : _colors[0];
 
-                    if (!colorCounts.ContainsKey(neighborColor))
-                        colorCounts[neighborColor] = 0;
-                    colorCounts[neighborColor]++;
-                }
+                colorCounts.TryAdd(neighborColor, 0);
+                colorCounts[neighborColor]++;
             }
 
             var cellColor = _colors[0];
@@ -101,13 +93,11 @@ public class ImmigrationColoring : IColoringModel
 
     public List<string> Serialize()
     {
-        var data = new List<string>();
-        foreach (var kvp in _cellColors)
-        {
-            var color = kvp.Value;
-            data.Add($"{kvp.Key.Item1},{kvp.Key.Item2}:{color.R},{color.G},{color.B}");
-        }
-        return data;
+        return (
+            from kvp in _cellColors
+            let color = kvp.Value
+            select $"{kvp.Key.Item1},{kvp.Key.Item2}:{color.R},{color.G},{color.B}"
+        ).ToList();
     }
 
     public void Deserialize(List<string> data)
@@ -116,20 +106,18 @@ public class ImmigrationColoring : IColoringModel
         foreach (var line in data)
         {
             var parts = line.Split(':');
-            if (parts.Length == 2)
-            {
-                var coords = parts[0].Split(',');
-                var rgb = parts[1].Split(',');
-                if (coords.Length == 2 && rgb.Length == 3)
-                {
-                    var x = int.Parse(coords[0]);
-                    var y = int.Parse(coords[1]);
-                    var r = byte.Parse(rgb[0]);
-                    var g = byte.Parse(rgb[1]);
-                    var b = byte.Parse(rgb[2]);
-                    _cellColors[(x, y)] = Color.FromRgb(r, g, b);
-                }
-            }
+            if (parts.Length != 2)
+                continue;
+            var coords = parts[0].Split(',');
+            var rgb = parts[1].Split(',');
+            if (coords.Length != 2 || rgb.Length != 3)
+                continue;
+            var x = int.Parse(coords[0]);
+            var y = int.Parse(coords[1]);
+            var r = byte.Parse(rgb[0]);
+            var g = byte.Parse(rgb[1]);
+            var b = byte.Parse(rgb[2]);
+            _cellColors[(x, y)] = Color.FromRgb(r, g, b);
         }
     }
 }

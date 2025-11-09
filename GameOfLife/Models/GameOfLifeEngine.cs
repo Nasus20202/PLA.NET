@@ -2,32 +2,17 @@
 
 namespace GameOfLife.Models;
 
-/// <summary>
-///     Core engine for Conway's Game of Life with configurable rules
-/// </summary>
-public class GameOfLifeEngine
+public class GameOfLifeEngine(int width, int height, GameRules? rules = null)
 {
-    private bool[,] _currentState;
-    private bool[,] _nextState;
+    private bool[,] _currentState = new bool[width, height];
+    private bool[,] _nextState = new bool[width, height];
 
-    public GameOfLifeEngine(int width, int height, GameRules? rules = null)
-    {
-        Width = width;
-        Height = height;
-        Rules = rules ?? GameRules.ConwayDefault();
-        _currentState = new bool[width, height];
-        _nextState = new bool[width, height];
-        Generation = 0;
-        BornCells = 0;
-        DeadCells = 0;
-    }
-
-    public int Width { get; }
-    public int Height { get; }
-    public GameRules Rules { get; set; }
-    public long Generation { get; private set; }
-    public long BornCells { get; private set; }
-    public long DeadCells { get; private set; }
+    public int Width { get; } = width;
+    public int Height { get; } = height;
+    public GameRules Rules { get; set; } = rules ?? GameRules.ConwayDefault();
+    public long Generation { get; private set; } = 0;
+    public long BornCells { get; private set; } = 0;
+    public long DeadCells { get; private set; } = 0;
 
     public bool GetCell(int x, int y)
     {
@@ -96,16 +81,13 @@ public class GameOfLifeEngine
             }
         }
 
-        // Swap states first
         (_currentState, _nextState) = (_nextState, _currentState);
 
-        // Then notify coloring model with the NEW current state
         if (coloringModel != null && newBornCells.Count > 0)
             coloringModel.OnCellsBorn(newBornCells, _currentState);
 
         if (coloringModel != null && deadCells.Count > 0)
             coloringModel.OnCellsDead(deadCells);
-
 
         Generation++;
         BornCells += born;
@@ -156,9 +138,6 @@ public class GameOfLifeEngine
         Array.Copy(state, _currentState, state.Length);
     }
 
-    /// <summary>
-    ///     Place a preset pattern at a specific position on the grid
-    /// </summary>
     public void PlacePattern(PresetPatterns pattern, int startX, int startY, bool merge = false)
     {
         for (var py = 0; py < pattern.Height; py++)
@@ -178,9 +157,6 @@ public class GameOfLifeEngine
         }
     }
 
-    /// <summary>
-    ///     Get the number of neighbors for a specific cell
-    /// </summary>
     public int GetNeighborCount(int x, int y)
     {
         return CountNeighbors(x, y);

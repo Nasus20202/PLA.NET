@@ -3,31 +3,16 @@ using System.Text;
 
 namespace GameOfLife.Models;
 
-/// <summary>
-///     Represents a complete game state for saving/loading
-/// </summary>
-public class GameState
+public class GameState(int width, int height, bool[,] cells, GameRules rules, long generation = 0)
 {
-    public GameState(int width, int height, bool[,] cells, GameRules rules, long generation = 0)
-    {
-        Width = width;
-        Height = height;
-        Cells = cells;
-        Rules = rules;
-        Generation = generation;
-        ColoringModelName = "Standard";
-        ColoringData = new List<string>();
-    }
+    public int Width { get; set; } = width;
+    public int Height { get; set; } = height;
+    public bool[,] Cells { get; set; } = cells;
+    public GameRules Rules { get; set; } = rules;
+    private long Generation { get; set; } = generation;
 
-    public int Width { get; set; }
-    public int Height { get; set; }
-    public bool[,] Cells { get; set; }
-    public GameRules Rules { get; set; }
-    public long Generation { get; set; }
-
-    // Coloring information
-    public string ColoringModelName { get; set; }
-    public List<string> ColoringData { get; set; }
+    public string ColoringModelName { get; set; } = "Standard";
+    public List<string> ColoringData { get; set; } = new();
 
     public void SaveToFile(string filePath)
     {
@@ -65,7 +50,8 @@ public class GameState
     public static GameState LoadFromFile(string filePath)
     {
         var lines = File.ReadAllLines(filePath);
-        int width = 0, height = 0;
+        int width = 0,
+            height = 0;
         long generation = 0;
         var rules = GameRules.ConwayDefault();
         var coloringModelName = "Standard";
@@ -77,35 +63,35 @@ public class GameState
         {
             var line = lines[i].Trim();
 
-            if (line.StartsWith("#") || string.IsNullOrWhiteSpace(line))
+            if (line.StartsWith('#') || string.IsNullOrWhiteSpace(line))
                 continue;
 
             if (line.StartsWith("Width:", StringComparison.OrdinalIgnoreCase))
             {
-                width = int.Parse(line.Substring(6).Trim());
+                width = int.Parse(line[6..].Trim());
             }
             else if (line.StartsWith("Height:", StringComparison.OrdinalIgnoreCase))
             {
-                height = int.Parse(line.Substring(7).Trim());
+                height = int.Parse(line[7..].Trim());
             }
             else if (line.StartsWith("Rules:", StringComparison.OrdinalIgnoreCase))
             {
-                var ruleStr = line.Substring(6).Trim();
+                var ruleStr = line[6..].Trim();
                 rules = GameRules.Parse(ruleStr);
             }
             else if (line.StartsWith("Generation:", StringComparison.OrdinalIgnoreCase))
             {
-                generation = long.Parse(line.Substring(11).Trim());
+                generation = long.Parse(line[11..].Trim());
             }
             else if (line.StartsWith("ColoringModel:", StringComparison.OrdinalIgnoreCase))
             {
-                coloringModelName = line.Substring(14).Trim();
+                coloringModelName = line[14..].Trim();
             }
             else if (line.StartsWith("ColorData:", StringComparison.OrdinalIgnoreCase))
             {
-                coloringData.Add(line.Substring(10).Trim());
+                coloringData.Add(line[10..].Trim());
             }
-            else if (line.Contains("O") || line.Contains("."))
+            else if (line.Contains('O') || line.Contains('.'))
             {
                 gridStartLine = i;
                 break;
@@ -121,7 +107,7 @@ public class GameState
         for (var i = gridStartLine; i < lines.Length && y < height; i++)
         {
             var line = lines[i];
-            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
                 continue;
 
             for (var x = 0; x < Math.Min(width, line.Length); x++)
@@ -129,11 +115,12 @@ public class GameState
             y++;
         }
 
-        var gameState = new GameState(width, height, cells, rules, generation);
-        gameState.ColoringModelName = coloringModelName;
-        gameState.ColoringData = coloringData;
+        var gameState = new GameState(width, height, cells, rules, generation)
+        {
+            ColoringModelName = coloringModelName,
+            ColoringData = coloringData,
+        };
 
         return gameState;
     }
 }
-

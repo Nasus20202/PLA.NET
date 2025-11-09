@@ -1,10 +1,7 @@
-﻿﻿using System.Windows.Media;
+﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
-/// <summary>
-///     Standard Conway's Game of Life coloring (black and white)
-/// </summary>
 public class StandardColoring : IColoringModel
 {
     public string Name => "Standard";
@@ -27,11 +24,8 @@ public class StandardColoring : IColoringModel
 
     public List<string> Serialize()
     {
-        return new List<string>(); // No state to serialize
+        return [];
     }
 
-    public void Deserialize(List<string> data)
-    {
-        // No state to deserialize
-    }
+    public void Deserialize(List<string> data) { }
 }

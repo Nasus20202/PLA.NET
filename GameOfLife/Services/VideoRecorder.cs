@@ -31,6 +31,7 @@ public class VideoRecorder : IDisposable
     public void Dispose()
     {
         StopRecording();
+        GC.SuppressFinalize(this);
     }
 
     public void StartRecording(string outputPath, int width, int height, int framerate = 30)
@@ -63,7 +64,7 @@ public class VideoRecorder : IDisposable
         }
     }
 
-    public unsafe void CaptureFrame(Visual visual, int width, int height)
+    public void CaptureFrame(Visual visual, int width, int height)
     {
         if (!IsRecording || _mediaOutput == null || _encoderSettings == null)
             throw new InvalidOperationException("Recording is not in progress");
@@ -71,8 +72,8 @@ public class VideoRecorder : IDisposable
         try
         {
             // Get actual size of the visual (for ScrollViewer, this is the viewport size)
-            int renderWidth = width;
-            int renderHeight = height;
+            var renderWidth = width;
+            var renderHeight = height;
 
             if (visual is FrameworkElement element)
             {
@@ -80,8 +81,10 @@ public class VideoRecorder : IDisposable
                 renderHeight = (int)Math.Ceiling(element.ActualHeight);
 
                 // Ensure even dimensions
-                if (renderWidth % 2 != 0) renderWidth++;
-                if (renderHeight % 2 != 0) renderHeight++;
+                if (renderWidth % 2 != 0)
+                    renderWidth++;
+                if (renderHeight % 2 != 0)
+                    renderHeight++;
             }
 
             // Render the visible area
@@ -106,8 +109,10 @@ public class VideoRecorder : IDisposable
             var scaledHeight = (int)(renderHeight * scaleFactor);
 
             // Ensure even dimensions
-            if (scaledWidth % 2 != 0) scaledWidth--;
-            if (scaledHeight % 2 != 0) scaledHeight--;
+            if (scaledWidth % 2 != 0)
+                scaledWidth--;
+            if (scaledHeight % 2 != 0)
+                scaledHeight--;
 
             var transform = new ScaleTransform(
                 (double)scaledWidth / renderWidth,
@@ -128,7 +133,11 @@ public class VideoRecorder : IDisposable
             var drawingVisual = new DrawingVisual();
             using (var dc = drawingVisual.RenderOpen())
             {
-                dc.DrawRectangle(System.Windows.Media.Brushes.Black, null, new Rect(0, 0, videoWidth, videoHeight));
+                dc.DrawRectangle(
+                    System.Windows.Media.Brushes.Black,
+                    null,
+                    new Rect(0, 0, videoWidth, videoHeight)
+                );
                 var x = (videoWidth - scaledWidth) / 2.0;
                 var y = (videoHeight - scaledHeight) / 2.0;
                 dc.DrawImage(scaledBitmap, new Rect(x, y, scaledWidth, scaledHeight));

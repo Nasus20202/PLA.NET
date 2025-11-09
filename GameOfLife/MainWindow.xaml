@@ -866,13 +866,6 @@
                 Foreground="#FFAAAAAA"
               />
               <TextBlock
-                Text="• Age-Based - Younger = brighter"
-                Style="{StaticResource ModernLabelStyle}"
-                Margin="5,2,0,2"
-                FontSize="11"
-                Foreground="#FFAAAAAA"
-              />
-              <TextBlock
                 Text="• Entropy - Color by neighbors"
                 Style="{StaticResource ModernLabelStyle}"
                 Margin="5,2,0,2"

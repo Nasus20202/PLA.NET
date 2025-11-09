@@ -2,19 +2,10 @@
 
 namespace GameOfLife.ViewModels;
 
-/// <summary>
-///     A simple ICommand implementation for MVVM
-/// </summary>
-public class RelayCommand : ICommand
+public class RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null) : ICommand
 {
-    private readonly Predicate<object?>? _canExecute;
-    private readonly Action<object?> _execute;
-
-    public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
-    {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
+    private readonly Action<object?> _execute =
+        execute ?? throw new ArgumentNullException(nameof(execute));
 
     public RelayCommand(Action execute, Func<bool>? canExecute = null)
         : this(_ => execute(), canExecute != null ? _ => canExecute() : null) { }
@@ -27,16 +18,11 @@ public class RelayCommand : ICommand
 
     public bool CanExecute(object? parameter)
     {
-        return _canExecute?.Invoke(parameter) ?? true;
+        return canExecute?.Invoke(parameter) ?? true;
     }
 
     public void Execute(object? parameter)
     {
         _execute(parameter);
-    }
-
-    public void RaiseCanExecuteChanged()
-    {
-        CommandManager.InvalidateRequerySuggested();
     }
 }

@@ -4,12 +4,8 @@ using System.Windows.Media;
 
 namespace GameOfLife.Converters;
 
-/// <summary>
-///     Converts a hex color string to a Brush
-/// </summary>
 public class ColorStringToBrushConverter : IValueConverter
 {
-    private const string DefaultColorString = "#FF00FF00";
     private static readonly Brush DefaultBrush = Brushes.LimeGreen;
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
@@ -36,8 +32,6 @@ public class ColorStringToBrushConverter : IValueConverter
         CultureInfo culture
     )
     {
-        if (value is SolidColorBrush brush)
-            return brush.Color.ToString();
-        return DefaultColorString;
+        throw new NotImplementedException();
     }
 }

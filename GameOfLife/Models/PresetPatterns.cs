@@ -1,55 +1,38 @@
 ﻿namespace GameOfLife.Models;
 
-/// <summary>
-///     Preset patterns for Game of Life (from Wikipedia and other sources)
-/// </summary>
-public class PresetPatterns
+public class PresetPatterns(string name, string description, bool[,] pattern)
 {
-    public PresetPatterns(string name, string description, bool[,] pattern)
-    {
-        Name = name;
-        Description = description;
-        Pattern = pattern;
-        Width = pattern.GetLength(0);
-        Height = pattern.GetLength(1);
-    }
+    public string Name { get; set; } = name;
+    public string Description { get; set; } = description;
+    public bool[,] Pattern { get; set; } = pattern;
+    public int Width { get; set; } = pattern.GetLength(0);
+    public int Height { get; set; } = pattern.GetLength(1);
 
-    public string Name { get; set; }
-    public string Description { get; set; }
-    public bool[,] Pattern { get; set; }
-    public int Width { get; set; }
-    public int Height { get; set; }
-
-    /// <summary>
-    ///     Gets a collection of built-in preset patterns
-    /// </summary>
     public static Dictionary<string, PresetPatterns> GetAllPatterns()
     {
-        var patterns = new Dictionary<string, PresetPatterns>();
-
-        // Still Lifes
-        patterns["Block"] = CreateBlock();
-        patterns["Beehive"] = CreateBeehive();
-        patterns["Loaf"] = CreateLoaf();
-        patterns["Boat"] = CreateBoat();
-        patterns["Tub"] = CreateTub();
-
-        // Oscillators
-        patterns["Blinker"] = CreateBlinker();
-        patterns["Beacon"] = CreateBeacon();
-        patterns["Toad"] = CreateToad();
-        patterns["Pulsar"] = CreatePulsar();
-        patterns["Pent-decathlon"] = CreatePentDecathlon();
-
-        // Spaceships
-        patterns["Glider"] = CreateGlider();
-        patterns["LWSS"] = CreateLwss();
-        patterns["MWSS"] = CreateMwss();
-        patterns["HWSS"] = CreateHwss();
-
-        // Methuselahs
-        patterns["Acorn"] = CreateAcorn();
-        patterns["R-pentomino"] = CreateRPentomino();
+        var patterns = new Dictionary<string, PresetPatterns>
+        {
+            // Still Lifes
+            ["Block"] = CreateBlock(),
+            ["Beehive"] = CreateBeehive(),
+            ["Loaf"] = CreateLoaf(),
+            ["Boat"] = CreateBoat(),
+            ["Tub"] = CreateTub(),
+            // Oscillators
+            ["Blinker"] = CreateBlinker(),
+            ["Beacon"] = CreateBeacon(),
+            ["Toad"] = CreateToad(),
+            ["Pulsar"] = CreatePulsar(),
+            ["Pent-decathlon"] = CreatePentDecathlon(),
+            // Spaceships
+            ["Glider"] = CreateGlider(),
+            ["LWSS"] = CreateLwss(),
+            ["MWSS"] = CreateMwss(),
+            ["HWSS"] = CreateHwss(),
+            // Methuselahs
+            ["Acorn"] = CreateAcorn(),
+            ["R-pentomino"] = CreateRPentomino(),
+        };
 
         return patterns;
     }

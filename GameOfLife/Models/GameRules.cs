@@ -2,30 +2,26 @@
 
 namespace GameOfLife.Models;
 
-/// <summary>
-///     Represents the rules for the Game of Life in B/S notation
-///     Example: B3/S23 (Conway's Game of Life)
-/// </summary>
 public class GameRules
 {
     public GameRules()
     {
-        BirthNumbers = new HashSet<int>();
-        SurvivalNumbers = new HashSet<int>();
+        BirthNumbers = [];
+        SurvivalNumbers = [];
     }
 
-    public GameRules(IEnumerable<int> birthNumbers, IEnumerable<int> survivalNumbers)
+    private GameRules(IEnumerable<int> birthNumbers, IEnumerable<int> survivalNumbers)
     {
         BirthNumbers = new HashSet<int>(birthNumbers);
         SurvivalNumbers = new HashSet<int>(survivalNumbers);
     }
 
-    public HashSet<int> BirthNumbers { get; set; }
-    public HashSet<int> SurvivalNumbers { get; set; }
+    private HashSet<int> BirthNumbers { get; set; }
+    private HashSet<int> SurvivalNumbers { get; set; }
 
     public static GameRules ConwayDefault()
     {
-        return new GameRules(new[] { 3 }, new[] { 2, 3 });
+        return new GameRules([3], [2, 3]);
     }
 
     public bool ShouldBeAlive(bool currentlyAlive, int neighbors)
