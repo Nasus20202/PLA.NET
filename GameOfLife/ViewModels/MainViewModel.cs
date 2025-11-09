@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using GameOfLife.Models;
+using GameOfLife.Models.Coloring;
 using GameOfLife.Services;
 using Microsoft.Win32;
 
@@ -114,14 +115,6 @@ public class MainViewModel : ViewModelBase
         {
             var wasAlive = _engine.GetCell(x, y);
             _engine.ToggleCell(x, y);
-
-            // If cell is now alive and we're using Age-Based coloring, set age to 0
-            if (!wasAlive && _engine.GetCell(x, y) && CurrentColoringModel?.Name == "Age-Based")
-            {
-                var ageBasedColoring = CurrentColoringModel as AgeBasedColoring;
-                if (ageBasedColoring != null)
-                    ageBasedColoring.SetCellAge(x, y, 0);
-            }
 
             OnPropertyChanged(nameof(Engine));
             OnPropertyChanged(nameof(LivingCells));
@@ -450,6 +443,11 @@ public class MainViewModel : ViewModelBase
                     _engine.Rules,
                     _engine.Generation
                 );
+
+                // Save coloring model information
+                state.ColoringModelName = CurrentColoringModel?.Name ?? "Standard";
+                state.ColoringData = CurrentColoringModel?.Serialize() ?? new List<string>();
+
                 state.SaveToFile(dialog.FileName);
                 MessageBox.Show(
                     "Game state saved successfully!",
@@ -491,10 +489,48 @@ public class MainViewModel : ViewModelBase
                     OnPropertyChanged(nameof(GridHeight));
                     OnPropertyChanged(nameof(Engine));
                 }
+                // Restore coloring model
+                SelectedColoringModel = state.ColoringModelName;
+                CurrentColoringModel = ColoringModelFactory.CreateColoring(
+                    state.ColoringModelName,
+                    _engine.Width,
+                    _engine.Height
+                );
+
+                // Restore coloring model state
+                if (state.ColoringData.Count > 0)
+                {
+                    CurrentColoringModel.Deserialize(state.ColoringData);
+                }
+                else
+                {
+                    // If no saved coloring data, initialize with current state
+                    CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
+                }
+
 
                 _engine.SetState(state.Cells);
                 _engine.Rules = state.Rules;
                 RulesText = state.Rules.ToString();
+
+                // Restore coloring model
+                SelectedColoringModel = state.ColoringModelName;
+                CurrentColoringModel = ColoringModelFactory.CreateColoring(
+                    state.ColoringModelName,
+                    _engine.Width,
+                    _engine.Height
+                );
+
+                // Restore coloring model state
+                if (state.ColoringData.Count > 0)
+                {
+                    CurrentColoringModel.Deserialize(state.ColoringData);
+                }
+                else
+                {
+                    // If no saved coloring data, initialize with current state
+                    CurrentColoringModel.InitializeColorsForGrid(_engine.GetStateCopy());
+                }
 
                 NotifyStatisticsChanged();
                 // Force immediate screen refresh

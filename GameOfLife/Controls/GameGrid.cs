@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using GameOfLife.Models;
+using GameOfLife.Models.Coloring;
 using GameOfLife.ViewModels;
 
 namespace GameOfLife.Controls;

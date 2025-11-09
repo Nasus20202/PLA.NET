@@ -1,4 +1,4 @@
-﻿using System.Windows.Media;
+﻿﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
@@ -39,4 +39,14 @@ public interface IColoringModel
     ///     Clears any internal state
     /// </summary>
     void Clear();
+
+    /// <summary>
+    ///     Serializes the coloring model state to a list of strings
+    /// </summary>
+    List<string> Serialize();
+
+    /// <summary>
+    ///     Deserializes the coloring model state from a list of strings
+    /// </summary>
+    void Deserialize(List<string> data);
 }

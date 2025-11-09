@@ -13,7 +13,6 @@ public class ColoringModelFactory
         Standard,
         Immigration,
         QuadLife,
-        AgeBased,
         Entropy,
         Rainbow,
     }
@@ -29,7 +28,6 @@ public class ColoringModelFactory
             ColoringModelType.Standard => new StandardColoring(),
             ColoringModelType.Immigration => new ImmigrationColoring(),
             ColoringModelType.QuadLife => new QuadLifeColoring(),
-            ColoringModelType.AgeBased => new AgeBasedColoring(),
             ColoringModelType.Entropy => new EntropyColoring(),
             ColoringModelType.Rainbow => new RainbowColoring(gridWidth, gridHeight),
             _ => new StandardColoring(),

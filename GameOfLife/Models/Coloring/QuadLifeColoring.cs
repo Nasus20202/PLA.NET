@@ -115,4 +115,38 @@ public class QuadLifeColoring : IColoringModel
     {
         _cellColors.Clear();
     }
+
+    public List<string> Serialize()
+    {
+        var data = new List<string>();
+        foreach (var kvp in _cellColors)
+        {
+            var color = kvp.Value;
+            data.Add($"{kvp.Key.Item1},{kvp.Key.Item2}:{color.R},{color.G},{color.B}");
+        }
+        return data;
+    }
+
+    public void Deserialize(List<string> data)
+    {
+        _cellColors.Clear();
+        foreach (var line in data)
+        {
+            var parts = line.Split(':');
+            if (parts.Length == 2)
+            {
+                var coords = parts[0].Split(',');
+                var rgb = parts[1].Split(',');
+                if (coords.Length == 2 && rgb.Length == 3)
+                {
+                    var x = int.Parse(coords[0]);
+                    var y = int.Parse(coords[1]);
+                    var r = byte.Parse(rgb[0]);
+                    var g = byte.Parse(rgb[1]);
+                    var b = byte.Parse(rgb[2]);
+                    _cellColors[(x, y)] = Color.FromRgb(r, g, b);
+                }
+            }
+        }
+    }
 }

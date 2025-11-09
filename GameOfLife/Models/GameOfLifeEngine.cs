@@ -1,4 +1,6 @@
-﻿namespace GameOfLife.Models;
+﻿using GameOfLife.Models.Coloring;
+
+namespace GameOfLife.Models;
 
 /// <summary>
 ///     Core engine for Conway's Game of Life with configurable rules
@@ -94,15 +96,16 @@ public class GameOfLifeEngine
             }
         }
 
+        // Swap states first
+        (_currentState, _nextState) = (_nextState, _currentState);
+
+        // Then notify coloring model with the NEW current state
         if (coloringModel != null && newBornCells.Count > 0)
             coloringModel.OnCellsBorn(newBornCells, _currentState);
 
         if (coloringModel != null && deadCells.Count > 0)
             coloringModel.OnCellsDead(deadCells);
 
-        var temp = _currentState;
-        _currentState = _nextState;
-        _nextState = temp;
 
         Generation++;
         BornCells += born;

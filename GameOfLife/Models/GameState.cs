@@ -15,6 +15,8 @@ public class GameState
         Cells = cells;
         Rules = rules;
         Generation = generation;
+        ColoringModelName = "Standard";
+        ColoringData = new List<string>();
     }
 
     public int Width { get; set; }
@@ -22,6 +24,10 @@ public class GameState
     public bool[,] Cells { get; set; }
     public GameRules Rules { get; set; }
     public long Generation { get; set; }
+
+    // Coloring information
+    public string ColoringModelName { get; set; }
+    public List<string> ColoringData { get; set; }
 
     public void SaveToFile(string filePath)
     {
@@ -32,6 +38,18 @@ public class GameState
         sb.AppendLine($"Height: {Height}");
         sb.AppendLine($"Rules: {Rules}");
         sb.AppendLine($"Generation: {Generation}");
+        sb.AppendLine($"ColoringModel: {ColoringModelName}");
+
+        // Save coloring data
+        if (ColoringData.Count > 0)
+        {
+            sb.AppendLine("# Coloring Data:");
+            foreach (var line in ColoringData)
+            {
+                sb.AppendLine($"ColorData: {line}");
+            }
+        }
+
         sb.AppendLine("# Grid (O = alive, . = dead):");
 
         for (var y = 0; y < Height; y++)
@@ -47,10 +65,11 @@ public class GameState
     public static GameState LoadFromFile(string filePath)
     {
         var lines = File.ReadAllLines(filePath);
-        int width = 0,
-            height = 0;
+        int width = 0, height = 0;
         long generation = 0;
         var rules = GameRules.ConwayDefault();
+        var coloringModelName = "Standard";
+        var coloringData = new List<string>();
 
         var gridStartLine = 0;
 
@@ -78,6 +97,14 @@ public class GameState
             {
                 generation = long.Parse(line.Substring(11).Trim());
             }
+            else if (line.StartsWith("ColoringModel:", StringComparison.OrdinalIgnoreCase))
+            {
+                coloringModelName = line.Substring(14).Trim();
+            }
+            else if (line.StartsWith("ColorData:", StringComparison.OrdinalIgnoreCase))
+            {
+                coloringData.Add(line.Substring(10).Trim());
+            }
             else if (line.Contains("O") || line.Contains("."))
             {
                 gridStartLine = i;
@@ -102,6 +129,11 @@ public class GameState
             y++;
         }
 
-        return new GameState(width, height, cells, rules, generation);
+        var gameState = new GameState(width, height, cells, rules, generation);
+        gameState.ColoringModelName = coloringModelName;
+        gameState.ColoringData = coloringData;
+
+        return gameState;
     }
 }
+

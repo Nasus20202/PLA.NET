@@ -29,6 +29,16 @@ public class RainbowColoring(int gridWidth = 100, int gridHeight = 100) : IColor
 
     public void Clear() { }
 
+    public List<string> Serialize()
+    {
+        return new List<string>(); // No state to serialize
+    }
+
+    public void Deserialize(List<string> data)
+    {
+        // No state to deserialize
+    }
+
     private Color HsvToRgb(double hue, double saturation, double value)
     {
         var c = value * saturation;

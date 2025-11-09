@@ -1,4 +1,4 @@
-﻿using System.Windows.Media;
+﻿﻿using System.Windows.Media;
 
 namespace GameOfLife.Models.Coloring;
 
@@ -33,4 +33,14 @@ public class EntropyColoring : IColoringModel
     public void OnCellsDead(List<(int x, int y)> deadCells) { }
 
     public void Clear() { }
+
+    public List<string> Serialize()
+    {
+        return new List<string>(); // No state to serialize
+    }
+
+    public void Deserialize(List<string> data)
+    {
+        // No state to deserialize
+    }
 }
