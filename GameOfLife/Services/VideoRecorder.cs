@@ -1,12 +1,9 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
+﻿using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using FFMediaToolkit;
 using FFMediaToolkit.Encoding;
 using FFMediaToolkit.Graphics;
-using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace GameOfLife.Services;
 
@@ -73,71 +70,86 @@ public class VideoRecorder : IDisposable
 
         try
         {
+            // Get actual size of the visual (for ScrollViewer, this is the viewport size)
+            int renderWidth = width;
+            int renderHeight = height;
+
+            if (visual is FrameworkElement element)
+            {
+                renderWidth = (int)Math.Ceiling(element.ActualWidth);
+                renderHeight = (int)Math.Ceiling(element.ActualHeight);
+
+                // Ensure even dimensions
+                if (renderWidth % 2 != 0) renderWidth++;
+                if (renderHeight % 2 != 0) renderHeight++;
+            }
+
+            // Render the visible area
             var renderBitmap = new RenderTargetBitmap(
-                width,
-                height,
-                96, // DPI X
-                96, // DPI Y
+                renderWidth,
+                renderHeight,
+                96,
+                96,
                 PixelFormats.Pbgra32
             );
             renderBitmap.Render(visual);
 
-            var encoder = new PngBitmapEncoder();
-            encoder.Frames.Add(BitmapFrame.Create(renderBitmap));
+            // Scale and center in video frame
+            var videoWidth = _encoderSettings.VideoWidth;
+            var videoHeight = _encoderSettings.VideoHeight;
 
-            using var memoryStream = new MemoryStream();
-            encoder.Save(memoryStream);
-            memoryStream.Position = 0;
+            var scaleX = (double)videoWidth / renderWidth;
+            var scaleY = (double)videoHeight / renderHeight;
+            var scaleFactor = Math.Min(scaleX, scaleY);
 
-            using var bitmap = new Bitmap(memoryStream);
+            var scaledWidth = (int)(renderWidth * scaleFactor);
+            var scaledHeight = (int)(renderHeight * scaleFactor);
 
-            var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-            var bitmapData = bitmap.LockBits(
-                rect,
-                ImageLockMode.ReadOnly,
-                PixelFormat.Format32bppArgb
+            // Ensure even dimensions
+            if (scaledWidth % 2 != 0) scaledWidth--;
+            if (scaledHeight % 2 != 0) scaledHeight--;
+
+            var transform = new ScaleTransform(
+                (double)scaledWidth / renderWidth,
+                (double)scaledHeight / renderHeight
             );
 
-            try
+            var scaledBitmap = new TransformedBitmap(renderBitmap, transform);
+
+            // Create final frame with black background, centered content
+            var finalBitmap = new RenderTargetBitmap(
+                videoWidth,
+                videoHeight,
+                96,
+                96,
+                PixelFormats.Pbgra32
+            );
+
+            var drawingVisual = new DrawingVisual();
+            using (var dc = drawingVisual.RenderOpen())
             {
-                var videoWidth = _encoderSettings.VideoWidth;
-                var videoHeight = _encoderSettings.VideoHeight;
-                var stride = videoWidth * 4; // 4 bytes per pixel for BGRA32
-
-                var frameData = new byte[stride * videoHeight];
-
-                fixed (byte* dstBuffer = frameData)
-                {
-                    var srcPtr = (byte*)bitmapData.Scan0;
-                    var srcStride = bitmapData.Stride;
-                    var minHeight = Math.Min(bitmap.Height, videoHeight);
-                    var minWidth = Math.Min(bitmap.Width, videoWidth);
-                    const int bytesPerPixel = 4;
-                    var copyWidth = minWidth * bytesPerPixel;
-
-                    for (var y = 0; y < minHeight; y++)
-                        Buffer.MemoryCopy(
-                            srcPtr + y * srcStride,
-                            dstBuffer + y * stride,
-                            copyWidth,
-                            copyWidth
-                        );
-                }
-
-                var imageData = new ImageData(
-                    frameData,
-                    ImagePixelFormat.Bgra32,
-                    videoWidth,
-                    videoHeight
-                );
-
-                _mediaOutput.Video.AddFrame(imageData);
-                FrameCount++;
+                dc.DrawRectangle(System.Windows.Media.Brushes.Black, null, new Rect(0, 0, videoWidth, videoHeight));
+                var x = (videoWidth - scaledWidth) / 2.0;
+                var y = (videoHeight - scaledHeight) / 2.0;
+                dc.DrawImage(scaledBitmap, new Rect(x, y, scaledWidth, scaledHeight));
             }
-            finally
-            {
-                bitmap.UnlockBits(bitmapData);
-            }
+
+            finalBitmap.Render(drawingVisual);
+
+            // Extract pixel data directly from RenderTargetBitmap
+            var stride = videoWidth * 4;
+            var frameData = new byte[stride * videoHeight];
+            finalBitmap.CopyPixels(frameData, stride, 0);
+
+            var imageData = new ImageData(
+                frameData,
+                ImagePixelFormat.Bgra32,
+                videoWidth,
+                videoHeight
+            );
+
+            _mediaOutput.Video.AddFrame(imageData);
+            FrameCount++;
         }
         catch (Exception ex)
         {

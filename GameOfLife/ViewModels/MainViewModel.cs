@@ -581,16 +581,10 @@ public class MainViewModel : ViewModelBase
                 // Initialize video recorder
                 _videoRecorder = new VideoRecorder();
 
-                // Record at a standard resolution - will capture the visible area
-                // The actual grid will be rendered at whatever zoom level is currently set
+                // Fixed 1080p output - FFmpeg will scale the input
                 VideoWidth = 1920;
                 VideoHeight = 1080;
 
-                // Make dimensions even (required by most video codecs)
-                if (VideoWidth % 2 != 0)
-                    VideoWidth++;
-                if (VideoHeight % 2 != 0)
-                    VideoHeight++;
 
                 _videoRecorder.StartRecording(dialog.FileName, VideoWidth, VideoHeight, 15);
                 IsRecording = true;

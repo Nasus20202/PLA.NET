@@ -504,6 +504,7 @@
         </Border>
         <!-- Game Grid with ScrollViewer for Zoom -->
         <ScrollViewer
+          x:Name="GameScrollViewer"
           Grid.Row="1"
           HorizontalScrollBarVisibility="Auto"
           VerticalScrollBarVisibility="Auto"

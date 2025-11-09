@@ -28,7 +28,8 @@ public partial class MainWindow
             var width = ViewModel.VideoWidth;
             var height = ViewModel.VideoHeight;
 
-            ViewModel.GetVideoRecorder()?.CaptureFrame(GameGridControl, width, height);
+            // Render the ScrollViewer to capture only the visible area
+            ViewModel.GetVideoRecorder()?.CaptureFrame(GameScrollViewer, width, height);
         }
         catch (Exception ex)
         {
