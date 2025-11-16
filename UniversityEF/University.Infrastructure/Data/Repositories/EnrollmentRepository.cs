@@ -41,6 +41,12 @@ public class EnrollmentRepository : IEnrollmentRepository
         return Task.CompletedTask;
     }
 
+    public Task AddEnrollmentsAsync(IEnumerable<Enrollment> enrollments)
+    {
+        _context.Enrollments.AddRange(enrollments);
+        return Task.CompletedTask;
+    }
+
     public Task UpdateEnrollmentAsync(Enrollment enrollment)
     {
         _context.Enrollments.Update(enrollment);

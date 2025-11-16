@@ -37,7 +37,7 @@ public class IndexCounterServiceTests
         // Arrange
         var prefix = "S";
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = 100 };
-        _mockRepo.Setup(r => r.GetIndexCounterAsync(prefix)).ReturnsAsync(counter);
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync(counter);
 
         // Act
         var result = await _service.GetNextIndexAsync(prefix);
@@ -58,7 +58,7 @@ public class IndexCounterServiceTests
     {
         // Arrange
         _mockRepo
-            .Setup(r => r.GetIndexCounterAsync(It.IsAny<string>()))
+            .Setup(r => r.GetCounterAsync(It.IsAny<string>()))
             .ReturnsAsync((IndexCounter?)null);
 
         // Act & Assert
@@ -71,7 +71,7 @@ public class IndexCounterServiceTests
     {
         // Arrange
         _mockRepo
-            .Setup(r => r.GetIndexCounterAsync(It.IsAny<string>()))
+            .Setup(r => r.GetCounterAsync(It.IsAny<string>()))
             .ReturnsAsync((IndexCounter?)null);
 
         // Act
@@ -89,7 +89,7 @@ public class IndexCounterServiceTests
         // Arrange
         var prefix = "S";
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = 100 };
-        _mockRepo.Setup(r => r.GetIndexCounterAsync(prefix)).ReturnsAsync(counter);
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync(counter);
 
         // Act
         var result = await _service.TryDecrementIndexAsync(prefix, "Sabc");
@@ -106,7 +106,7 @@ public class IndexCounterServiceTests
         // Arrange
         var prefix = "S";
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = 101 };
-        _mockRepo.Setup(r => r.GetIndexCounterAsync(prefix)).ReturnsAsync(counter);
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync(counter);
 
         // Act
         var result = await _service.TryDecrementIndexAsync(prefix, "S101");
@@ -127,7 +127,7 @@ public class IndexCounterServiceTests
         // Arrange
         var prefix = "S";
         _mockRepo
-            .Setup(r => r.GetIndexCounterAsync(prefix))
+            .Setup(r => r.GetCounterAsync(prefix))
             .ReturnsAsync(new IndexCounter { Prefix = prefix, CurrentValue = 1 });
 
         // Act & Assert
@@ -141,7 +141,7 @@ public class IndexCounterServiceTests
     {
         // Arrange
         var prefix = "S";
-        _mockRepo.Setup(r => r.GetIndexCounterAsync(prefix)).ReturnsAsync((IndexCounter?)null);
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync((IndexCounter?)null);
 
         // Act
         await _service.InitializeCounterAsync(prefix, 1);
@@ -149,7 +149,7 @@ public class IndexCounterServiceTests
         // Assert
         _mockRepo.Verify(
             r =>
-                r.AddIndexCounterAsync(
+                r.AddCounterAsync(
                     It.Is<IndexCounter>(c => c.Prefix == prefix && c.CurrentValue == 1)
                 ),
             Times.Once
@@ -163,7 +163,7 @@ public class IndexCounterServiceTests
         // Arrange
         var prefix = "S";
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = 50 };
-        _mockRepo.Setup(r => r.GetIndexCounterAsync(prefix)).ReturnsAsync(counter);
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync(counter);
 
         // Act
         var result = await _service.GetCounterAsync(prefix);
@@ -196,7 +196,7 @@ public class IndexCounterServiceTests
         // Arrange
         var prefix = "S";
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = 1 };
-        _mockRepo.Setup(r => r.GetIndexCounterAsync(prefix)).ReturnsAsync(counter);
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync(counter);
 
         // Act
         await _service.DeleteCounterAsync(prefix);
@@ -211,7 +211,7 @@ public class IndexCounterServiceTests
     {
         // Arrange
         _mockRepo
-            .Setup(r => r.GetIndexCounterAsync(It.IsAny<string>()))
+            .Setup(r => r.GetCounterAsync(It.IsAny<string>()))
             .ReturnsAsync((IndexCounter?)null);
 
         // Act

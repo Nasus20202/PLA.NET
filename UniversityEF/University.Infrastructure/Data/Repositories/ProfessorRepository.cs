@@ -33,6 +33,12 @@ public class ProfessorRepository : IProfessorRepository
         return Task.CompletedTask;
     }
 
+    public Task AddProfessorsAsync(IEnumerable<Professor> professors)
+    {
+        _context.Professors.AddRange(professors);
+        return Task.CompletedTask;
+    }
+
     public Task UpdateProfessorAsync(Professor professor)
     {
         _context.Professors.Update(professor);

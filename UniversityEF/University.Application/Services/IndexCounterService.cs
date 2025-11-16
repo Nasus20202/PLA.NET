@@ -22,7 +22,7 @@ public class IndexCounterService : IIndexCounterService
 
         try
         {
-            var counter = await _indexRepo.GetIndexCounterAsync(prefix);
+            var counter = await _indexRepo.GetCounterAsync(prefix);
 
             if (counter == null)
             {
@@ -60,7 +60,7 @@ public class IndexCounterService : IIndexCounterService
 
         try
         {
-            var counter = await _indexRepo.GetIndexCounterAsync(prefix);
+            var counter = await _indexRepo.GetCounterAsync(prefix);
 
             if (counter == null)
                 return false;
@@ -95,7 +95,7 @@ public class IndexCounterService : IIndexCounterService
 
     public async Task InitializeCounterAsync(string prefix, int startValue)
     {
-        var existingCounter = await _indexRepo.GetIndexCounterAsync(prefix);
+        var existingCounter = await _indexRepo.GetCounterAsync(prefix);
 
         if (existingCounter != null)
         {
@@ -104,13 +104,13 @@ public class IndexCounterService : IIndexCounterService
 
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = startValue };
 
-        await _indexRepo.AddIndexCounterAsync(counter);
+        await _indexRepo.AddCounterAsync(counter);
         await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task<IndexCounter?> GetCounterAsync(string prefix)
     {
-        return await _indexRepo.GetIndexCounterAsync(prefix);
+        return await _indexRepo.GetCounterAsync(prefix);
     }
 
     public async Task<IEnumerable<IndexCounter>> GetAllCountersAsync()
@@ -120,7 +120,7 @@ public class IndexCounterService : IIndexCounterService
 
     public async Task DeleteCounterAsync(string prefix)
     {
-        var counter = await _indexRepo.GetIndexCounterAsync(prefix);
+        var counter = await _indexRepo.GetCounterAsync(prefix);
 
         if (counter != null)
         {

@@ -37,6 +37,12 @@ public class CourseRepository : ICourseRepository
         return Task.CompletedTask;
     }
 
+    public Task AddCoursesAsync(IEnumerable<Course> courses)
+    {
+        _context.Courses.AddRange(courses);
+        return Task.CompletedTask;
+    }
+
     public Task UpdateCourseAsync(Course course)
     {
         _context.Courses.Update(course);

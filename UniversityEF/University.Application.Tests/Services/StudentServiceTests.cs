@@ -153,7 +153,7 @@ public class StudentServiceTests : ServiceTestBase
 
         // Simulate counter present and increment
         var counter = new IndexCounter { Prefix = "S", CurrentValue = 100 };
-        indexRepo.Setup(r => r.GetIndexCounterAsync("S")).ReturnsAsync(counter);
+        indexRepo.Setup(r => r.GetCounterAsync("S")).ReturnsAsync(counter);
 
         // SaveChanges should throw when trying to save the student
         unit.Setup(u => u.SaveChangesAsync())
@@ -184,7 +184,7 @@ public class StudentServiceTests : ServiceTestBase
         var unit = new Mock<IUnitOfWork>();
 
         var counter = new IndexCounter { Prefix = "S", CurrentValue = 101 };
-        indexRepo.Setup(r => r.GetIndexCounterAsync("S")).ReturnsAsync(counter);
+        indexRepo.Setup(r => r.GetCounterAsync("S")).ReturnsAsync(counter);
 
         var student = new Student { Id = 1, UniversityIndex = "S101" };
         studentRepo.Setup(r => r.GetStudentByIdAsync(1)).ReturnsAsync(student);
@@ -216,7 +216,7 @@ public class StudentServiceTests : ServiceTestBase
         var unit = new Mock<IUnitOfWork>();
 
         var counter = new IndexCounter { Prefix = "S", CurrentValue = 100 };
-        indexRepo.Setup(r => r.GetIndexCounterAsync("S")).ReturnsAsync(counter);
+        indexRepo.Setup(r => r.GetCounterAsync("S")).ReturnsAsync(counter);
 
         unit.Setup(u => u.BeginTransactionAsync()).Returns(Task.CompletedTask);
         unit.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
@@ -243,7 +243,7 @@ public class StudentServiceTests : ServiceTestBase
         var unit = new Mock<IUnitOfWork>();
 
         var counter = new IndexCounter { Prefix = "S", CurrentValue = 101 };
-        indexRepo.Setup(r => r.GetIndexCounterAsync("S")).ReturnsAsync(counter);
+        indexRepo.Setup(r => r.GetCounterAsync("S")).ReturnsAsync(counter);
 
         var student = new Student { Id = 1, UniversityIndex = "S101" };
         studentRepo.Setup(r => r.GetStudentByIdAsync(1)).ReturnsAsync(student);

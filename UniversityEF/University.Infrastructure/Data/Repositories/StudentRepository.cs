@@ -32,6 +32,12 @@ public class StudentRepository : IStudentRepository
         return Task.CompletedTask;
     }
 
+    public Task AddStudentsAsync(IEnumerable<Student> students)
+    {
+        _context.Students.AddRange(students);
+        return Task.CompletedTask;
+    }
+
     public Task UpdateStudentAsync(Student student)
     {
         _context.Students.Update(student);

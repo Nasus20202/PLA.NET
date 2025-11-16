@@ -148,6 +148,25 @@ public class ProfessorServiceTests : ServiceTestBase
     }
 
     [Fact]
+    public async Task GetAllProfessorsAsync_ReturnsAllProfessors()
+    {
+        // Arrange
+        var professors = new List<Professor>
+        {
+            new Professor { Id = 1, FirstName = "John" },
+            new Professor { Id = 2, FirstName = "Jane" },
+        };
+        _mockRepo.Setup(r => r.GetAllProfessorsAsync()).ReturnsAsync(professors);
+
+        // Act
+        var result = await _service.GetAllProfessorsAsync();
+
+        // Assert
+        Assert.Equal(professors, result);
+        _mockRepo.Verify(r => r.GetAllProfessorsAsync(), Times.Once);
+    }
+
+    [Fact]
     public async Task UpdateProfessorAsync_CallsUpdateAndSave()
     {
         // Arrange

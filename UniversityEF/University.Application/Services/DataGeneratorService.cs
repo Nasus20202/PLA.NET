@@ -1,33 +1,37 @@
 using Bogus;
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class DataGeneratorService : IDataGeneratorService
 {
-    private readonly IDepartmentService _departmentService;
-    private readonly IProfessorService _professorService;
-    private readonly IStudentService _studentService;
-    private readonly ICourseService _courseService;
-    private readonly IEnrollmentService _enrollmentService;
-    private readonly IIndexCounterService _indexCounterService;
+    private readonly IDepartmentRepository _departmentRepository;
+    private readonly IProfessorRepository _professorRepository;
+    private readonly IStudentRepository _studentRepository;
+    private readonly ICourseRepository _courseRepository;
+    private readonly IEnrollmentRepository _enrollmentRepository;
+    private readonly IIndexCounterRepository _indexCounterRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
     public DataGeneratorService(
-        IDepartmentService departmentService,
-        IProfessorService professorService,
-        IStudentService studentService,
-        ICourseService courseService,
-        IEnrollmentService enrollmentService,
-        IIndexCounterService indexCounterService
+        IDepartmentRepository departmentRepository,
+        IProfessorRepository professorRepository,
+        IStudentRepository studentRepository,
+        ICourseRepository courseRepository,
+        IEnrollmentRepository enrollmentRepository,
+        IIndexCounterRepository indexCounterRepository,
+        IUnitOfWork unitOfWork
     )
     {
-        _departmentService = departmentService;
-        _professorService = professorService;
-        _studentService = studentService;
-        _courseService = courseService;
-        _enrollmentService = enrollmentService;
-        _indexCounterService = indexCounterService;
+        _departmentRepository = departmentRepository;
+        _professorRepository = professorRepository;
+        _studentRepository = studentRepository;
+        _courseRepository = courseRepository;
+        _enrollmentRepository = enrollmentRepository;
+        _indexCounterRepository = indexCounterRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task GenerateDataAsync(
@@ -36,29 +40,47 @@ public class DataGeneratorService : IDataGeneratorService
         int numberOfMasterStudents = 20
     )
     {
-        await InitializeCountersAsync();
-        var departments = await GenerateDepartmentsAsync();
-        var professors = await GenerateProfessorsAsync(numberOfProfessors);
-        var courses = await GenerateCoursesAsync(departments, professors);
-        await AddPrerequisitesAsync(courses);
-        var students = await GenerateStudentsAsync(numberOfStudents);
-        var masterStudents = await GenerateMasterStudentsAsync(numberOfMasterStudents, professors);
-        await EnrollStudentsAsync(students.Concat(masterStudents).ToList(), courses);
+        await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            await InitializeCountersAsync();
+            var departments = await GenerateDepartmentsAsync();
+            var professors = await GenerateProfessorsAsync(numberOfProfessors);
+            var courses = await GenerateCoursesAsync(departments, professors);
+            await AddPrerequisitesAsync(courses);
+            var students = await GenerateStudentsAsync(numberOfStudents);
+            var masterStudents = await GenerateMasterStudentsAsync(
+                numberOfMasterStudents,
+                professors
+            );
+            await EnrollStudentsAsync(students.Concat(masterStudents).ToList(), courses);
+
+            await _unitOfWork.CommitTransactionAsync();
+        }
+        catch
+        {
+            await _unitOfWork.RollbackTransactionAsync();
+            throw;
+        }
     }
 
     private async Task InitializeCountersAsync()
     {
-        var counterS = await _indexCounterService.GetCounterAsync("S");
+        var counterS = await _indexCounterRepository.GetCounterAsync("S");
         if (counterS == null)
         {
-            await _indexCounterService.InitializeCounterAsync("S", 1000);
+            var newCounterS = new IndexCounter { Prefix = "S", CurrentValue = 1000 };
+            await _indexCounterRepository.AddCounterAsync(newCounterS);
         }
 
-        var counterP = await _indexCounterService.GetCounterAsync("P");
+        var counterP = await _indexCounterRepository.GetCounterAsync("P");
         if (counterP == null)
         {
-            await _indexCounterService.InitializeCounterAsync("P", 100);
+            var newCounterP = new IndexCounter { Prefix = "P", CurrentValue = 100 };
+            await _indexCounterRepository.AddCounterAsync(newCounterP);
         }
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
     private async Task<List<Department>> GenerateDepartmentsAsync()
@@ -75,9 +97,12 @@ public class DataGeneratorService : IDataGeneratorService
 
         foreach (var name in departmentNames)
         {
-            var department = await _departmentService.CreateDepartmentAsync(name);
+            var department = new Department { Name = name };
             departments.Add(department);
         }
+
+        await _departmentRepository.AddDepartmentsAsync(departments);
+        await _unitOfWork.SaveChangesAsync();
 
         return departments;
     }
@@ -86,8 +111,10 @@ public class DataGeneratorService : IDataGeneratorService
     {
         var professors = new List<Professor>();
         var titles = new[] { "PhD", "PhD Habil.", "Prof." };
-
         var faker = new Faker("en");
+
+        // Atomically reserve a batch of indexes (thread-safe)
+        var (startIndex, _) = await _indexCounterRepository.ReserveBatchAsync("P", count);
 
         for (int i = 0; i < count; i++)
         {
@@ -98,24 +125,30 @@ public class DataGeneratorService : IDataGeneratorService
                 PostalCode = faker.Address.ZipCode(),
             };
 
-            var professor = await _professorService.CreateProfessorAsync(
-                faker.Name.FirstName(),
-                faker.Name.LastName(),
-                faker.PickRandom(titles),
-                address
-            );
+            var office =
+                i % 2 == 0
+                    ? new Office
+                    {
+                        OfficeNumber = faker.Random.Number(100, 500).ToString(),
+                        Building = faker.PickRandom("A", "B", "C", "D"),
+                    }
+                    : null;
 
-            if (i % 2 == 0)
+            var professor = new Professor
             {
-                await _professorService.AssignOfficeAsync(
-                    professor.Id,
-                    faker.Random.Number(100, 500).ToString(),
-                    faker.PickRandom("A", "B", "C", "D")
-                );
-            }
+                FirstName = faker.Name.FirstName(),
+                LastName = faker.Name.LastName(),
+                AcademicTitle = faker.PickRandom(titles),
+                UniversityIndex = $"P{startIndex + i}",
+                ResidenceAddress = address,
+                Office = office,
+            };
 
             professors.Add(professor);
         }
+
+        await _professorRepository.AddProfessorsAsync(professors);
+        await _unitOfWork.SaveChangesAsync();
 
         return professors;
     }
@@ -125,6 +158,9 @@ public class DataGeneratorService : IDataGeneratorService
         var students = new List<Student>();
         var faker = new Faker("en");
 
+        // Atomically reserve a batch of indexes (thread-safe)
+        var (startIndex, _) = await _indexCounterRepository.ReserveBatchAsync("S", count);
+
         for (int i = 0; i < count; i++)
         {
             var address = new Address
@@ -134,15 +170,20 @@ public class DataGeneratorService : IDataGeneratorService
                 PostalCode = faker.Address.ZipCode(),
             };
 
-            var student = await _studentService.CreateStudentAsync(
-                faker.Name.FirstName(),
-                faker.Name.LastName(),
-                faker.Random.Number(1, 3),
-                address
-            );
+            var student = new Student
+            {
+                FirstName = faker.Name.FirstName(),
+                LastName = faker.Name.LastName(),
+                UniversityIndex = $"S{startIndex + i}",
+                YearOfStudy = faker.Random.Number(1, 3),
+                ResidenceAddress = address,
+            };
 
             students.Add(student);
         }
+
+        await _studentRepository.AddStudentsAsync(students);
+        await _unitOfWork.SaveChangesAsync();
 
         return students;
     }
@@ -155,6 +196,9 @@ public class DataGeneratorService : IDataGeneratorService
         var students = new List<Student>();
         var faker = new Faker("en");
 
+        // Atomically reserve a batch of indexes (thread-safe, continues from regular students)
+        var (startIndex, _) = await _indexCounterRepository.ReserveBatchAsync("S", count);
+
         for (int i = 0; i < count; i++)
         {
             var address = new Address
@@ -166,17 +210,22 @@ public class DataGeneratorService : IDataGeneratorService
 
             var supervisor = faker.PickRandom(professors);
 
-            var student = await _studentService.CreateMasterStudentAsync(
-                faker.Name.FirstName(),
-                faker.Name.LastName(),
-                faker.Random.Number(4, 5),
-                address,
-                faker.Lorem.Sentence(5),
-                supervisor.Id
-            );
+            var student = new MasterStudent
+            {
+                FirstName = faker.Name.FirstName(),
+                LastName = faker.Name.LastName(),
+                UniversityIndex = $"S{startIndex + i}",
+                YearOfStudy = faker.Random.Number(4, 5),
+                ResidenceAddress = address,
+                ThesisTitle = faker.Lorem.Sentence(5),
+                SupervisorId = supervisor.Id,
+            };
 
             students.Add(student);
         }
+
+        await _studentRepository.AddStudentsAsync(students);
+        await _unitOfWork.SaveChangesAsync();
 
         return students;
     }
@@ -225,17 +274,21 @@ public class DataGeneratorService : IDataGeneratorService
 
                 var professor = faker.PickRandom(professors);
 
-                var course = await _courseService.CreateCourseAsync(
-                    name,
-                    code,
-                    faker.Random.Number(3, 6),
-                    department.Id,
-                    professor.Id
-                );
+                var course = new Course
+                {
+                    Name = name,
+                    CourseCode = code,
+                    ECTSPoints = faker.Random.Number(3, 6),
+                    DepartmentId = department.Id,
+                    ProfessorId = professor.Id,
+                };
 
                 courses.Add(course);
             }
         }
+
+        await _courseRepository.AddCoursesAsync(courses);
+        await _unitOfWork.SaveChangesAsync();
 
         return courses;
     }
@@ -243,6 +296,7 @@ public class DataGeneratorService : IDataGeneratorService
     private async Task AddPrerequisitesAsync(List<Course> courses)
     {
         var faker = new Faker();
+
         foreach (var course in courses.Where(k => faker.Random.Bool(0.3f)))
         {
             var prerequisitesCount = faker.Random.Number(1, 2);
@@ -253,19 +307,22 @@ public class DataGeneratorService : IDataGeneratorService
 
             foreach (var prerequisite in potentialPrerequisites)
             {
-                try
+                if (!course.Prerequisites.Any(p => p.Id == prerequisite.Id))
                 {
-                    await _courseService.AddPrerequisiteAsync(course.Id, prerequisite.Id);
+                    course.Prerequisites.Add(prerequisite);
                 }
-                catch { }
             }
         }
+
+        await _unitOfWork.SaveChangesAsync();
     }
 
     private async Task EnrollStudentsAsync(List<Student> students, List<Course> courses)
     {
         var faker = new Faker();
         var grades = new[] { 3.0, 3.5, 4.0, 4.5, 5.0 };
+        var enrollments = new List<Enrollment>();
+        var enrollmentKeys = new HashSet<(int studentId, int courseId)>();
 
         foreach (var student in students)
         {
@@ -274,24 +331,27 @@ public class DataGeneratorService : IDataGeneratorService
 
             foreach (var course in selectedCourses)
             {
-                try
-                {
-                    var enrollment = await _enrollmentService.EnrollStudentAsync(
-                        student.Id,
-                        course.Id,
-                        faker.Random.Number(1, 2)
-                    );
+                var key = (student.Id, course.Id);
 
-                    if (faker.Random.Bool(0.8f))
-                    {
-                        await _enrollmentService.UpdateGradeAsync(
-                            enrollment.Id,
-                            faker.PickRandom(grades)
-                        );
-                    }
-                }
-                catch { }
+                // Skip if already enrolled
+                if (enrollmentKeys.Contains(key))
+                    continue;
+
+                enrollmentKeys.Add(key);
+
+                var enrollment = new Enrollment
+                {
+                    StudentId = student.Id,
+                    CourseId = course.Id,
+                    Semester = faker.Random.Number(1, 2),
+                    Grade = faker.Random.Bool(0.8f) ? faker.PickRandom(grades) : null,
+                };
+
+                enrollments.Add(enrollment);
             }
         }
+
+        await _enrollmentRepository.AddEnrollmentsAsync(enrollments);
+        await _unitOfWork.SaveChangesAsync();
     }
 }

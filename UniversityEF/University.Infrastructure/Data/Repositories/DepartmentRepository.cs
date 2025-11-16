@@ -31,6 +31,12 @@ public class DepartmentRepository : IDepartmentRepository
         return Task.CompletedTask;
     }
 
+    public Task AddDepartmentsAsync(IEnumerable<Department> departments)
+    {
+        _context.Faculties.AddRange(departments);
+        return Task.CompletedTask;
+    }
+
     public Task UpdateDepartmentAsync(Department department)
     {
         _context.Faculties.Update(department);
