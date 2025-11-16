@@ -48,7 +48,7 @@ class Program
         services.AddScoped<IEnrollmentService, EnrollmentService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IQueryService, QueryService>();
-        services.AddScoped<DataGeneratorService>();
+        services.AddScoped<IDataGeneratorService, DataGeneratorService>();
     }
 }
 
@@ -145,8 +145,6 @@ class UniversityTUI : Window
             Y = Pos.Center(),
             Text =
                 "Welcome to University Management System\n\n"
-                + "Built with Entity Framework Core\n"
-                + "Clean Architecture + Repository Pattern\n\n"
                 + "Use the menu bar above to navigate",
             TextAlignment = TextAlignment.Centered,
         };
@@ -207,7 +205,7 @@ class UniversityTUI : Window
                 {
                     using var scope = _serviceProvider.CreateScope();
                     var generator =
-                        scope.ServiceProvider.GetRequiredService<DataGeneratorService>();
+                        scope.ServiceProvider.GetRequiredService<IDataGeneratorService>();
                     await generator.GenerateDataAsync(profCount, studCount, masterCount);
                 });
 

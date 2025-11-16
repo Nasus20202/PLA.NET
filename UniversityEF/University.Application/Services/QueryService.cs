@@ -4,14 +4,6 @@ using University.Domain.Entities;
 
 namespace University.Application.Services;
 
-/// <summary>
-/// Service with advanced LINQ queries
-/// All queries are optimized:
-/// - AsNoTracking() for read-only
-/// - Projection of only required data
-/// - Eager loading with Include/ThenInclude
-/// - Server-side evaluation
-/// </summary>
 public class QueryService : IQueryService
 {
     private readonly IUniversityRepository _repository;
@@ -21,9 +13,6 @@ public class QueryService : IQueryService
         _repository = repository;
     }
 
-    /// <summary>
-    /// Query 1: Professor with the largest total number of students
-    /// </summary>
     public async Task<ProfessorStudentCountDto?> GetProfessorWithMostStudentsAsync()
     {
         var results = await _repository.ExecuteProfessorQueryAsync(profesors =>
@@ -53,9 +42,6 @@ public class QueryService : IQueryService
         return results.FirstOrDefault();
     }
 
-    /// <summary>
-    /// Query 2: Average grades for each course in a given department
-    /// </summary>
     public async Task<IEnumerable<CourseAverageDto>> GetCourseAveragesForFacultyAsync(int wydzialId)
     {
         return await _repository.ExecuteCourseQueryAsync(courses =>
@@ -78,9 +64,6 @@ public class QueryService : IQueryService
         );
     }
 
-    /// <summary>
-    /// Query 3: Student with the hardest schedule
-    /// </summary>
     public async Task<StudentDifficultyDto?> GetStudentWithHardestScheduleAsync()
     {
         var results = await _repository.ExecuteQueryAsync(students =>

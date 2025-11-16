@@ -4,11 +4,7 @@ using University.Domain.Entities;
 
 namespace University.Application.Services;
 
-/// <summary>
-/// Test data generator using Bogus
-/// Uses business logic to generate UniversityIndex
-/// </summary>
-public class DataGeneratorService
+public class DataGeneratorService : IDataGeneratorService
 {
     private readonly IDepartmentService _departmentService;
     private readonly IProfessorService _professorService;
@@ -52,7 +48,6 @@ public class DataGeneratorService
 
     private async Task InitializeCountersAsync()
     {
-        // Initialize counters if they don't exist
         var counterS = await _indexCounterService.GetCounterAsync("S");
         if (counterS == null)
         {
@@ -110,7 +105,6 @@ public class DataGeneratorService
                 address
             );
 
-            // Assign an office to every second professor
             if (i % 2 == 0)
             {
                 await _professorService.AssignOfficeAsync(
@@ -222,7 +216,6 @@ public class DataGeneratorService
                 var level = faker.PickRandom(levels);
                 var name = $"{subject} {level}";
 
-                // Generate a short department prefix robustly (first 3 letters from name)
                 var lettersOnly = new string(department.Name.Where(char.IsLetter).ToArray());
                 var prefix =
                     lettersOnly.Length >= 3
@@ -250,8 +243,6 @@ public class DataGeneratorService
     private async Task AddPrerequisitesAsync(List<Course> courses)
     {
         var faker = new Faker();
-
-        // Add random prerequisites (~30% of courses have prerequisites)
         foreach (var course in courses.Where(k => faker.Random.Bool(0.3f)))
         {
             var prerequisitesCount = faker.Random.Number(1, 2);
@@ -266,10 +257,7 @@ public class DataGeneratorService
                 {
                     await _courseService.AddPrerequisiteAsync(course.Id, prerequisite.Id);
                 }
-                catch
-                {
-                    // Ignore if already exists
-                }
+                catch { }
             }
         }
     }
@@ -281,7 +269,6 @@ public class DataGeneratorService
 
         foreach (var student in students)
         {
-            // Each student enrolls in 3-6 courses
             var numberOfCourses = faker.Random.Number(3, 6);
             var selectedCourses = courses.OrderBy(_ => faker.Random.Number()).Take(numberOfCourses);
 
@@ -295,7 +282,6 @@ public class DataGeneratorService
                         faker.Random.Number(1, 2)
                     );
 
-                    // 80% of students get a grade
                     if (faker.Random.Bool(0.8f))
                     {
                         await _enrollmentService.UpdateGradeAsync(
@@ -304,10 +290,7 @@ public class DataGeneratorService
                         );
                     }
                 }
-                catch
-                {
-                    // Ignore if already enrolled
-                }
+                catch { }
             }
         }
     }

@@ -2,9 +2,6 @@ using University.Domain.Entities;
 
 namespace University.Application.Interfaces;
 
-/// <summary>
-/// Interfejs dla serwisu zarządzającego licznikami indeksów
-/// </summary>
 public interface IIndexCounterService
 {
     Task<string> GetNextIndexAsync(string prefix);

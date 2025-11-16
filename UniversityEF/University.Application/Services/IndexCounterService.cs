@@ -3,9 +3,6 @@ using University.Domain.Entities;
 
 namespace University.Application.Services;
 
-/// <summary>
-/// Service that manages index counters
-/// </summary>
 public class IndexCounterService : IIndexCounterService
 {
     private readonly IUniversityRepository _repository;
@@ -15,15 +12,11 @@ public class IndexCounterService : IIndexCounterService
         _repository = repository;
     }
 
-    /// <summary>
-    /// Retrieves the next index number for the given prefix (in a transaction)
-    /// </summary>
     public async Task<string> GetNextIndexAsync(string prefix)
     {
         await _repository.BeginTransactionAsync();
         try
         {
-            // Get counter (with locking for consistency)
             var counter = await _repository.GetIndexCounterAsync(prefix);
 
             if (counter == null)
@@ -33,13 +26,11 @@ public class IndexCounterService : IIndexCounterService
                 );
             }
 
-            // Increment value
             counter.CurrentValue++;
             await _repository.UpdateIndexCounterAsync(counter);
             await _repository.SaveChangesAsync();
             await _repository.CommitTransactionAsync();
 
-            // Return formatted index
             return $"{prefix}{counter.CurrentValue}";
         }
         catch
@@ -49,9 +40,6 @@ public class IndexCounterService : IIndexCounterService
         }
     }
 
-    /// <summary>
-    /// Attempts to decrement the counter if the removed index was the last in the sequence
-    /// </summary>
     public async Task<bool> TryDecrementIndexAsync(string prefix, string currentIndex)
     {
         await _repository.BeginTransactionAsync();
@@ -62,12 +50,10 @@ public class IndexCounterService : IIndexCounterService
             if (counter == null)
                 return false;
 
-            // Extract number from the index (e.g. "S1002" -> 1002)
             var numberPart = currentIndex.Substring(prefix.Length);
             if (!int.TryParse(numberPart, out int indexNumber))
                 return false;
 
-            // Check if this is the last number in the sequence
             if (indexNumber == counter.CurrentValue)
             {
                 counter.CurrentValue--;
@@ -87,9 +73,6 @@ public class IndexCounterService : IIndexCounterService
         }
     }
 
-    /// <summary>
-    /// Initializes a new counter
-    /// </summary>
     public async Task InitializeCounterAsync(string prefix, int startValue)
     {
         var existingCounter = await _repository.GetIndexCounterAsync(prefix);

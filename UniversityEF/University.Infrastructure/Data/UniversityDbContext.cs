@@ -3,15 +3,11 @@ using University.Domain.Entities;
 
 namespace University.Infrastructure.Data;
 
-/// <summary>
-/// Database context for the university system
-/// </summary>
 public class UniversityDbContext : DbContext
 {
     public UniversityDbContext(DbContextOptions<UniversityDbContext> options)
         : base(options) { }
 
-    // DbSets for all entities
     public DbSet<Student> Students { get; set; }
     public DbSet<MasterStudent> MasterStudents { get; set; }
     public DbSet<Professor> Professors { get; set; }
@@ -25,7 +21,6 @@ public class UniversityDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ========== STUDENT CONFIG ==========
         modelBuilder.Entity<Student>(entity =>
         {
             entity.HasKey(s => s.Id);
@@ -45,7 +40,6 @@ public class UniversityDbContext : DbContext
             );
         });
 
-        // ========== MASTER STUDENT CONFIG (INHERITANCE) ==========
         modelBuilder.Entity<MasterStudent>(entity =>
         {
             // Relation to supervisor
@@ -53,10 +47,9 @@ public class UniversityDbContext : DbContext
                 .HasOne(s => s.Supervisor)
                 .WithMany(p => p.SupervisedStudents)
                 .HasForeignKey(s => s.SupervisorId)
-                .OnDelete(DeleteBehavior.SetNull); // Deleting a professor does not delete the student
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
-        // ========== PROFESSOR CONFIG ==========
         modelBuilder.Entity<Professor>(entity =>
         {
             entity.HasKey(p => p.Id);
@@ -83,13 +76,11 @@ public class UniversityDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // ========== OFFICE CONFIG ==========
         modelBuilder.Entity<Office>(entity =>
         {
             entity.HasKey(g => g.Id);
         });
 
-        // ========== COURSE CONFIG ==========
         modelBuilder.Entity<Course>(entity =>
         {
             entity.HasKey(k => k.Id);
@@ -127,13 +118,11 @@ public class UniversityDbContext : DbContext
                 );
         });
 
-        // ========== DEPARTMENT CONFIG ==========
         modelBuilder.Entity<Department>(entity =>
         {
             entity.HasKey(w => w.Id);
         });
 
-        // ========== ENROLLMENT CONFIG ==========
         modelBuilder.Entity<Enrollment>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -156,7 +145,6 @@ public class UniversityDbContext : DbContext
             entity.HasIndex(e => new { e.StudentId, e.CourseId }).IsUnique();
         });
 
-        // ========== INDEX COUNTERS CONFIG ==========
         modelBuilder.Entity<IndexCounter>(entity =>
         {
             entity.HasKey(l => l.Prefix);
