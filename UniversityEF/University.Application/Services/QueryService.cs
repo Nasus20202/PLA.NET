@@ -1,14 +1,15 @@
 using University.Application.DTOs;
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class QueryService : IQueryService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly IQueryRepository _repository;
 
-    public QueryService(IUniversityRepository repository)
+    public QueryService(IQueryRepository repository)
     {
         _repository = repository;
     }

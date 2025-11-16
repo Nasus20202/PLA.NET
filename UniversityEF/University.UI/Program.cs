@@ -2,8 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui;
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Application.Services;
 using University.Infrastructure.Data;
+using University.Infrastructure.Data.Repositories;
 using TGuiApp = Terminal.Gui.Application;
 
 namespace University.UI;
@@ -41,6 +43,40 @@ class Program
         );
 
         services.AddScoped<IUniversityRepository, UniversityRepository>();
+        // Register smaller repositories and unit of work
+        services.AddScoped<
+            IStudentRepository,
+            University.Infrastructure.Data.Repositories.StudentRepository
+        >();
+        services.AddScoped<
+            IProfessorRepository,
+            University.Infrastructure.Data.Repositories.ProfessorRepository
+        >();
+        services.AddScoped<
+            ICourseRepository,
+            University.Infrastructure.Data.Repositories.CourseRepository
+        >();
+        services.AddScoped<
+            IDepartmentRepository,
+            University.Infrastructure.Data.Repositories.DepartmentRepository
+        >();
+        services.AddScoped<
+            IEnrollmentRepository,
+            University.Infrastructure.Data.Repositories.EnrollmentRepository
+        >();
+        services.AddScoped<
+            IIndexCounterRepository,
+            University.Infrastructure.Data.Repositories.IndexCounterRepository
+        >();
+        services.AddScoped<
+            IOfficeRepository,
+            University.Infrastructure.Data.Repositories.OfficeRepository
+        >();
+        services.AddScoped<
+            IQueryRepository,
+            University.Infrastructure.Data.Repositories.QueryRepository
+        >();
+        services.AddScoped<IUnitOfWork, University.Infrastructure.Data.UnitOfWork>();
         services.AddScoped<IIndexCounterService, IndexCounterService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<IProfessorService, ProfessorService>();

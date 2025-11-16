@@ -1,15 +1,18 @@
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class EnrollmentService : IEnrollmentService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly IEnrollmentRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public EnrollmentService(IUniversityRepository repository)
+    public EnrollmentService(IEnrollmentRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Enrollment> EnrollStudentAsync(int studentId, int kursId, int semestr)
@@ -28,7 +31,7 @@ public class EnrollmentService : IEnrollmentService
         };
 
         await _repository.AddEnrollmentAsync(enrollment);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return enrollment;
     }
@@ -43,7 +46,7 @@ public class EnrollmentService : IEnrollmentService
 
         enrollment.Grade = ocena;
         await _repository.UpdateEnrollmentAsync(enrollment);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task<IEnumerable<Enrollment>> GetStudentEnrollmentsAsync(int studentId)
@@ -65,6 +68,6 @@ public class EnrollmentService : IEnrollmentService
             );
 
         await _repository.DeleteEnrollmentAsync(enrollment);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 }

@@ -1,20 +1,24 @@
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class StudentService : IStudentService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly IStudentRepository _studentRepository;
     private readonly IIndexCounterService _indexCounterService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public StudentService(
-        IUniversityRepository repository,
-        IIndexCounterService indexCounterService
+        IStudentRepository studentRepository,
+        IIndexCounterService indexCounterService,
+        IUnitOfWork unitOfWork
     )
     {
-        _repository = repository;
+        _studentRepository = studentRepository;
         _indexCounterService = indexCounterService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Student> CreateStudentAsync(
@@ -24,7 +28,6 @@ public class StudentService : IStudentService
         Address address
     )
     {
-        // Pobierz kolejny indeks (w transakcji)
         var indeks = await _indexCounterService.GetNextIndexAsync("S");
 
         var student = new Student
@@ -36,8 +39,8 @@ public class StudentService : IStudentService
             ResidenceAddress = address,
         };
 
-        await _repository.AddStudentAsync(student);
-        await _repository.SaveChangesAsync();
+        await _studentRepository.AddStudentAsync(student);
+        await _unitOfWork.SaveChangesAsync();
 
         return student;
     }
@@ -51,7 +54,6 @@ public class StudentService : IStudentService
         int? supervisorId = null
     )
     {
-        // Pobierz kolejny indeks (w transakcji)
         var indeks = await _indexCounterService.GetNextIndexAsync("S");
 
         var student = new MasterStudent
@@ -65,38 +67,37 @@ public class StudentService : IStudentService
             SupervisorId = supervisorId,
         };
 
-        await _repository.AddStudentAsync(student);
-        await _repository.SaveChangesAsync();
+        await _studentRepository.AddStudentAsync(student);
+        await _unitOfWork.SaveChangesAsync();
 
         return student;
     }
 
     public async Task<Student?> GetStudentByIdAsync(int id)
     {
-        return await _repository.GetStudentByIdAsync(id);
+        return await _studentRepository.GetStudentByIdAsync(id);
     }
 
     public async Task<IEnumerable<Student>> GetAllStudentsAsync()
     {
-        return await _repository.GetAllStudentsAsync();
+        return await _studentRepository.GetAllStudentsAsync();
     }
 
     public async Task UpdateStudentAsync(Student student)
     {
-        await _repository.UpdateStudentAsync(student);
-        await _repository.SaveChangesAsync();
+        await _studentRepository.UpdateStudentAsync(student);
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task DeleteStudentAsync(int id)
     {
-        var student = await _repository.GetStudentByIdAsync(id);
+        var student = await _studentRepository.GetStudentByIdAsync(id);
         if (student == null)
             throw new InvalidOperationException($"Student with ID {id} does not exist.");
 
-        // Próbuj zmniejszyć licznik jeśli to ostatni student
         await _indexCounterService.TryDecrementIndexAsync("S", student.UniversityIndex);
 
-        await _repository.DeleteStudentAsync(student);
-        await _repository.SaveChangesAsync();
+        await _studentRepository.DeleteStudentAsync(student);
+        await _unitOfWork.SaveChangesAsync();
     }
 }

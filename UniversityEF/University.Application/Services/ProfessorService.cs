@@ -1,20 +1,27 @@
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class ProfessorService : IProfessorService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly IProfessorRepository _repository;
+    private readonly IOfficeRepository _officeRepository;
     private readonly IIndexCounterService _indexCounterService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public ProfessorService(
-        IUniversityRepository repository,
-        IIndexCounterService indexCounterService
+        IProfessorRepository repository,
+        IOfficeRepository officeRepository,
+        IIndexCounterService indexCounterService,
+        IUnitOfWork unitOfWork
     )
     {
         _repository = repository;
+        _officeRepository = officeRepository;
         _indexCounterService = indexCounterService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Professor> CreateProfessorAsync(
@@ -36,7 +43,7 @@ public class ProfessorService : IProfessorService
         };
 
         await _repository.AddProfessorAsync(professor);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return professor;
     }
@@ -54,7 +61,7 @@ public class ProfessorService : IProfessorService
     public async Task UpdateProfessorAsync(Professor professor)
     {
         await _repository.UpdateProfessorAsync(professor);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task DeleteProfessorAsync(int id)
@@ -64,9 +71,8 @@ public class ProfessorService : IProfessorService
             throw new InvalidOperationException($"Professor with ID {id} does not exist.");
 
         await _indexCounterService.TryDecrementIndexAsync("P", professor.UniversityIndex);
-
         await _repository.DeleteProfessorAsync(professor);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task AssignOfficeAsync(int professorId, string officeNumber, string building)
@@ -86,7 +92,7 @@ public class ProfessorService : IProfessorService
             ProfessorId = professorId,
         };
 
-        await _repository.AddOfficeAsync(office);
-        await _repository.SaveChangesAsync();
+        await _officeRepository.AddOfficeAsync(office);
+        await _unitOfWork.SaveChangesAsync();
     }
 }

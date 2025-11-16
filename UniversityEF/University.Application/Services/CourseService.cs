@@ -1,15 +1,18 @@
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class CourseService : ICourseService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly ICourseRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public CourseService(IUniversityRepository repository)
+    public CourseService(ICourseRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Course> CreateCourseAsync(
@@ -30,7 +33,7 @@ public class CourseService : ICourseService
         };
 
         await _repository.AddCourseAsync(course);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return course;
     }
@@ -48,7 +51,7 @@ public class CourseService : ICourseService
     public async Task UpdateCourseAsync(Course course)
     {
         await _repository.UpdateCourseAsync(course);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task DeleteCourseAsync(int id)
@@ -58,7 +61,7 @@ public class CourseService : ICourseService
             throw new InvalidOperationException($"Course with ID {id} does not exist.");
 
         await _repository.DeleteCourseAsync(course);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task AddPrerequisiteAsync(int courseId, int prerequisiteId)
@@ -73,7 +76,7 @@ public class CourseService : ICourseService
         {
             course.Prerequisites.Add(prerequisite);
             await _repository.UpdateCourseAsync(course);
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 
@@ -89,7 +92,7 @@ public class CourseService : ICourseService
         {
             course.Prerequisites.Remove(prerequisite);
             await _repository.UpdateCourseAsync(course);
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
