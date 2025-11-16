@@ -1,22 +1,25 @@
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class DepartmentService : IDepartmentService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly IDepartmentRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public DepartmentService(IUniversityRepository repository)
+    public DepartmentService(IDepartmentRepository repository, IUnitOfWork unitOfWork)
     {
         _repository = repository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<Department> CreateDepartmentAsync(string nazwa)
     {
         var department = new Department { Name = nazwa };
         await _repository.AddDepartmentAsync(department);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         return department;
     }
 
@@ -33,7 +36,7 @@ public class DepartmentService : IDepartmentService
     public async Task UpdateDepartmentAsync(Department department)
     {
         await _repository.UpdateDepartmentAsync(department);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task DeleteDepartmentAsync(int id)
@@ -43,6 +46,6 @@ public class DepartmentService : IDepartmentService
             throw new InvalidOperationException($"Department with ID {id} does not exist.");
 
         await _repository.DeleteDepartmentAsync(department);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 }

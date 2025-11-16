@@ -1,23 +1,28 @@
 using University.Application.Interfaces;
+using University.Application.Interfaces.Repositories;
 using University.Domain.Entities;
 
 namespace University.Application.Services;
 
 public class IndexCounterService : IIndexCounterService
 {
-    private readonly IUniversityRepository _repository;
+    private readonly IIndexCounterRepository _indexRepo;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public IndexCounterService(IUniversityRepository repository)
+    public IndexCounterService(IIndexCounterRepository indexRepo, IUnitOfWork unitOfWork)
     {
-        _repository = repository;
+        _indexRepo = indexRepo;
+        _unitOfWork = unitOfWork;
     }
 
-    public async Task<string> GetNextIndexAsync(string prefix)
+    public async Task<string> GetNextIndexAsync(string prefix, bool manageTransaction = true)
     {
-        await _repository.BeginTransactionAsync();
+        if (manageTransaction)
+            await _unitOfWork.BeginTransactionAsync();
+
         try
         {
-            var counter = await _repository.GetIndexCounterAsync(prefix);
+            var counter = await _indexRepo.GetIndexCounterAsync(prefix);
 
             if (counter == null)
             {
@@ -27,25 +32,35 @@ public class IndexCounterService : IIndexCounterService
             }
 
             counter.CurrentValue++;
-            await _repository.UpdateIndexCounterAsync(counter);
-            await _repository.SaveChangesAsync();
-            await _repository.CommitTransactionAsync();
+            await _indexRepo.UpdateIndexCounterAsync(counter);
+            if (manageTransaction)
+            {
+                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.CommitTransactionAsync();
+            }
 
             return $"{prefix}{counter.CurrentValue}";
         }
         catch
         {
-            await _repository.RollbackTransactionAsync();
+            if (manageTransaction)
+                await _unitOfWork.RollbackTransactionAsync();
             throw;
         }
     }
 
-    public async Task<bool> TryDecrementIndexAsync(string prefix, string currentIndex)
+    public async Task<bool> TryDecrementIndexAsync(
+        string prefix,
+        string currentIndex,
+        bool manageTransaction = true
+    )
     {
-        await _repository.BeginTransactionAsync();
+        if (manageTransaction)
+            await _unitOfWork.BeginTransactionAsync();
+
         try
         {
-            var counter = await _repository.GetIndexCounterAsync(prefix);
+            var counter = await _indexRepo.GetIndexCounterAsync(prefix);
 
             if (counter == null)
                 return false;
@@ -57,25 +72,30 @@ public class IndexCounterService : IIndexCounterService
             if (indexNumber == counter.CurrentValue)
             {
                 counter.CurrentValue--;
-                await _repository.UpdateIndexCounterAsync(counter);
-                await _repository.SaveChangesAsync();
-                await _repository.CommitTransactionAsync();
+                await _indexRepo.UpdateIndexCounterAsync(counter);
+                if (manageTransaction)
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                    await _unitOfWork.CommitTransactionAsync();
+                }
                 return true;
             }
 
-            await _repository.CommitTransactionAsync();
+            if (manageTransaction)
+                await _unitOfWork.CommitTransactionAsync();
             return false;
         }
         catch
         {
-            await _repository.RollbackTransactionAsync();
+            if (manageTransaction)
+                await _unitOfWork.RollbackTransactionAsync();
             throw;
         }
     }
 
     public async Task InitializeCounterAsync(string prefix, int startValue)
     {
-        var existingCounter = await _repository.GetIndexCounterAsync(prefix);
+        var existingCounter = await _indexRepo.GetIndexCounterAsync(prefix);
 
         if (existingCounter != null)
         {
@@ -84,28 +104,28 @@ public class IndexCounterService : IIndexCounterService
 
         var counter = new IndexCounter { Prefix = prefix, CurrentValue = startValue };
 
-        await _repository.AddIndexCounterAsync(counter);
-        await _repository.SaveChangesAsync();
+        await _indexRepo.AddIndexCounterAsync(counter);
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task<IndexCounter?> GetCounterAsync(string prefix)
     {
-        return await _repository.GetIndexCounterAsync(prefix);
+        return await _indexRepo.GetIndexCounterAsync(prefix);
     }
 
     public async Task<IEnumerable<IndexCounter>> GetAllCountersAsync()
     {
-        return await _repository.GetAllIndexCountersAsync();
+        return await _indexRepo.GetAllIndexCountersAsync();
     }
 
     public async Task DeleteCounterAsync(string prefix)
     {
-        var counter = await _repository.GetIndexCounterAsync(prefix);
+        var counter = await _indexRepo.GetIndexCounterAsync(prefix);
 
         if (counter != null)
         {
-            await _repository.DeleteIndexCounterAsync(counter);
-            await _repository.SaveChangesAsync();
+            await _indexRepo.DeleteIndexCounterAsync(counter);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
