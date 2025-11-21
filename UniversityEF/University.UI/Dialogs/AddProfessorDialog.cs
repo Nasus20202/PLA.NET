@@ -15,6 +15,7 @@ public class AddProfessorDialog : Dialog
     private readonly TextField _streetField;
     private readonly TextField _cityField;
     private readonly TextField _postalCodeField;
+    private readonly TextField _prefixField;
     public bool Success { get; private set; }
 
     public AddProfessorDialog(IServiceProvider serviceProvider)
@@ -22,7 +23,7 @@ public class AddProfessorDialog : Dialog
         _serviceProvider = serviceProvider;
         Title = "Add New Professor";
         Width = 70;
-        Height = 18;
+        Height = 20;
 
         var firstNameLabel = new Label("First Name:") { X = 1, Y = 1 };
         _firstNameField = new TextField("")
@@ -72,15 +73,23 @@ public class AddProfessorDialog : Dialog
             Width = Dim.Fill(1),
         };
 
-        var saveButton = new Button("Save")
+        var prefixLabel = new Label("Index Prefix (optional, default: P):") { X = 1, Y = 13 };
+        _prefixField = new TextField("P")
         {
             X = 1,
             Y = 14,
+            Width = Dim.Fill(1),
+        };
+
+        var saveButton = new Button("Save")
+        {
+            X = 1,
+            Y = 16,
             IsDefault = true,
         };
         saveButton.Clicked += OnSave;
 
-        var cancelButton = new Button("Cancel") { X = Pos.Right(saveButton) + 2, Y = 14 };
+        var cancelButton = new Button("Cancel") { X = Pos.Right(saveButton) + 2, Y = 16 };
         cancelButton.Clicked += () => TGuiApp.RequestStop();
 
         Add(
@@ -96,6 +105,8 @@ public class AddProfessorDialog : Dialog
             _cityField,
             postalLabel,
             _postalCodeField,
+            prefixLabel,
+            _prefixField,
             saveButton,
             cancelButton
         );
@@ -122,6 +133,12 @@ public class AddProfessorDialog : Dialog
             return;
         }
 
+        var prefix = _prefixField.Text.ToString()?.Trim()?.ToUpper();
+        if (string.IsNullOrWhiteSpace(prefix))
+        {
+            prefix = "P"; // Default
+        }
+
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -134,10 +151,16 @@ public class AddProfessorDialog : Dialog
                 PostalCode = postalCode ?? "",
             };
 
-            await professorService.CreateProfessorAsync(firstName, lastName, title, address);
+            await professorService.CreateProfessorAsync(
+                firstName,
+                lastName,
+                title,
+                address,
+                prefix
+            );
 
             Success = true;
-            MessageBox.Query("Success", "Professor created successfully!", "OK");
+            MessageBox.Query("Success", $"Professor created with index prefix '{prefix}'!", "OK");
             TGuiApp.RequestStop();
         }
         catch (Exception ex)

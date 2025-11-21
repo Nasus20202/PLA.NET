@@ -154,11 +154,11 @@ public class StudentsView : BaseView
                 var items = _students
                     .Select(s =>
                     {
-                        var type = s is MasterStudent ? "[Master]" : "[Bach]";
+                        var type = s is MasterStudent ? "[Master]" : "[Bachelor]";
                         var fullName = $"{s.FirstName} {s.LastName}";
                         var city = s.ResidenceAddress.City ?? "";
                         var street = s.ResidenceAddress.Street ?? "";
-                        return $"ID:{s.Id, 4} | {type, -8} | {s.UniversityIndex, -10} | {fullName, -25} | Y:{s.YearOfStudy} | {city, -20} | {street}";
+                        return $"ID:{s.Id, 4} | {type, -10} | {s.UniversityIndex, -10} | {fullName, -25} | Y:{s.YearOfStudy} | {city, -20} | {street}";
                     })
                     .ToList();
 

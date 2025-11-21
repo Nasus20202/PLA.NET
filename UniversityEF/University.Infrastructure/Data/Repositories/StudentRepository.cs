@@ -26,6 +26,28 @@ public class StudentRepository : IStudentRepository
         return await _context.Students.Include(s => s.Enrollments).ToListAsync();
     }
 
+    public async Task<int?> GetHighestIndexNumberForPrefixAsync(string prefix)
+    {
+        var students = await _context
+            .Students.Where(s => s.UniversityIndex.StartsWith(prefix))
+            .Select(s => s.UniversityIndex)
+            .ToListAsync();
+
+        if (!students.Any())
+            return null;
+
+        var numbers = students
+            .Select(index =>
+            {
+                var numberPart = index.Substring(prefix.Length);
+                return int.TryParse(numberPart, out int num) ? (int?)num : null;
+            })
+            .Where(n => n.HasValue)
+            .Select(n => n!.Value);
+
+        return numbers.Any() ? numbers.Max() : null;
+    }
+
     public Task AddStudentAsync(Student student)
     {
         _context.Students.Add(student);

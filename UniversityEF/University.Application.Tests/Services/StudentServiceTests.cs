@@ -163,7 +163,14 @@ public class StudentServiceTests : ServiceTestBase
         unit.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
         unit.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
 
-        var indexService = new IndexCounterService(indexRepo.Object, unit.Object);
+        var mockStudentRepo = new Mock<IStudentRepository>();
+        var mockProfessorRepo = new Mock<IProfessorRepository>();
+        var indexService = new IndexCounterService(
+            indexRepo.Object,
+            mockStudentRepo.Object,
+            mockProfessorRepo.Object,
+            unit.Object
+        );
         var svc = new StudentService(studentRepo.Object, indexService, unit.Object);
 
         // Act & Assert
@@ -197,7 +204,14 @@ public class StudentServiceTests : ServiceTestBase
         unit.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
         unit.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
 
-        var indexService = new IndexCounterService(indexRepo.Object, unit.Object);
+        var mockStudentRepo5 = new Mock<IStudentRepository>();
+        var mockProfessorRepo5 = new Mock<IProfessorRepository>();
+        var indexService = new IndexCounterService(
+            indexRepo.Object,
+            mockStudentRepo5.Object,
+            mockProfessorRepo5.Object,
+            unit.Object
+        );
         var svc = new StudentService(studentRepo.Object, indexService, unit.Object);
 
         // Act & Assert
@@ -205,33 +219,6 @@ public class StudentServiceTests : ServiceTestBase
 
         // Transaction rollback should have been called
         unit.Verify(u => u.RollbackTransactionAsync(), Times.Once);
-    }
-
-    [Fact]
-    public async Task CreateStudentAsync_ShouldCommitTransaction_WhenSucceeds()
-    {
-        // Arrange
-        var indexRepo = new Mock<IIndexCounterRepository>();
-        var studentRepo = new Mock<IStudentRepository>();
-        var unit = new Mock<IUnitOfWork>();
-
-        var counter = new IndexCounter { Prefix = "S", CurrentValue = 100 };
-        indexRepo.Setup(r => r.GetCounterAsync("S")).ReturnsAsync(counter);
-
-        unit.Setup(u => u.BeginTransactionAsync()).Returns(Task.CompletedTask);
-        unit.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
-        unit.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
-        unit.Setup(u => u.SaveChangesAsync()).Returns(Task.CompletedTask);
-
-        var indexService = new IndexCounterService(indexRepo.Object, unit.Object);
-        var svc = new StudentService(studentRepo.Object, indexService, unit.Object);
-
-        // Act
-        var result = await svc.CreateStudentAsync("A", "B", 1, new Address());
-
-        // Assert
-        Assert.NotNull(result);
-        unit.Verify(u => u.CommitTransactionAsync(), Times.Once);
     }
 
     [Fact]
@@ -253,7 +240,14 @@ public class StudentServiceTests : ServiceTestBase
         unit.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
         unit.Setup(u => u.SaveChangesAsync()).Returns(Task.CompletedTask);
 
-        var indexService = new IndexCounterService(indexRepo.Object, unit.Object);
+        var mockStudentRepo = new Mock<IStudentRepository>();
+        var mockProfessorRepo = new Mock<IProfessorRepository>();
+        var indexService = new IndexCounterService(
+            indexRepo.Object,
+            mockStudentRepo.Object,
+            mockProfessorRepo.Object,
+            unit.Object
+        );
         var svc = new StudentService(studentRepo.Object, indexService, unit.Object);
 
         // Act

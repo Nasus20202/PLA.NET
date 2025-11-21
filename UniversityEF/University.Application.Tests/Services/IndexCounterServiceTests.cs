@@ -15,20 +15,37 @@ namespace University.Application.Tests.Services;
 public class IndexCounterServiceTests
 {
     private readonly Mock<IIndexCounterRepository> _mockRepo;
+    private readonly Mock<IStudentRepository> _mockStudentRepo;
+    private readonly Mock<IProfessorRepository> _mockProfessorRepo;
     private readonly Mock<IUnitOfWork> _mockUnit;
     private readonly IndexCounterService _service;
 
     public IndexCounterServiceTests()
     {
         _mockRepo = new Mock<IIndexCounterRepository>();
+        _mockStudentRepo = new Mock<IStudentRepository>();
+        _mockProfessorRepo = new Mock<IProfessorRepository>();
         _mockUnit = new Mock<IUnitOfWork>();
-        _service = new IndexCounterService(_mockRepo.Object, _mockUnit.Object);
+        _service = new IndexCounterService(
+            _mockRepo.Object,
+            _mockStudentRepo.Object,
+            _mockProfessorRepo.Object,
+            _mockUnit.Object
+        );
 
         // Default behaviors for transaction-related calls
         _mockUnit.Setup(u => u.BeginTransactionAsync()).Returns(Task.CompletedTask);
         _mockUnit.Setup(u => u.CommitTransactionAsync()).Returns(Task.CompletedTask);
         _mockUnit.Setup(u => u.RollbackTransactionAsync()).Returns(Task.CompletedTask);
         _mockUnit.Setup(u => u.SaveChangesAsync()).Returns(Task.CompletedTask);
+
+        // Default behaviors for repository calls
+        _mockStudentRepo
+            .Setup(r => r.GetHighestIndexNumberForPrefixAsync(It.IsAny<string>()))
+            .ReturnsAsync((int?)null);
+        _mockProfessorRepo
+            .Setup(r => r.GetHighestIndexNumberForPrefixAsync(It.IsAny<string>()))
+            .ReturnsAsync((int?)null);
     }
 
     [Fact]

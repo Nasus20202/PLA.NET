@@ -7,16 +7,28 @@ namespace University.Application.Services;
 public class IndexCounterService : IIndexCounterService
 {
     private readonly IIndexCounterRepository _indexRepo;
+    private readonly IStudentRepository _studentRepo;
+    private readonly IProfessorRepository _professorRepo;
     private readonly IUnitOfWork _unitOfWork;
 
-    public IndexCounterService(IIndexCounterRepository indexRepo, IUnitOfWork unitOfWork)
+    public IndexCounterService(
+        IIndexCounterRepository indexRepo,
+        IStudentRepository studentRepo,
+        IProfessorRepository professorRepo,
+        IUnitOfWork unitOfWork
+    )
     {
         _indexRepo = indexRepo;
+        _studentRepo = studentRepo;
+        _professorRepo = professorRepo;
         _unitOfWork = unitOfWork;
     }
 
     public async Task<string> GetNextIndexAsync(string prefix, bool manageTransaction = true)
     {
+        // Normalize prefix to uppercase
+        prefix = prefix.ToUpper();
+
         if (manageTransaction)
             await _unitOfWork.BeginTransactionAsync();
 
@@ -55,6 +67,9 @@ public class IndexCounterService : IIndexCounterService
         bool manageTransaction = true
     )
     {
+        // Normalize prefix to uppercase
+        prefix = prefix.ToUpper();
+
         if (manageTransaction)
             await _unitOfWork.BeginTransactionAsync();
 
@@ -95,6 +110,9 @@ public class IndexCounterService : IIndexCounterService
 
     public async Task InitializeCounterAsync(string prefix, int startValue)
     {
+        // Normalize prefix to uppercase
+        prefix = prefix.ToUpper();
+
         var existingCounter = await _indexRepo.GetCounterAsync(prefix);
 
         if (existingCounter != null)
@@ -110,6 +128,9 @@ public class IndexCounterService : IIndexCounterService
 
     public async Task<IndexCounter?> GetCounterAsync(string prefix)
     {
+        // Normalize prefix to uppercase
+        prefix = prefix.ToUpper();
+
         return await _indexRepo.GetCounterAsync(prefix);
     }
 
@@ -120,12 +141,30 @@ public class IndexCounterService : IIndexCounterService
 
     public async Task UpdateCounterAsync(string prefix, int newValue)
     {
+        // Normalize prefix to uppercase
+        prefix = prefix.ToUpper();
+
         var counter = await _indexRepo.GetCounterAsync(prefix);
 
         if (counter == null)
         {
             throw new InvalidOperationException(
                 $"Counter for prefix '{prefix}' does not exist. Initialize the counter first."
+            );
+        }
+
+        // Check highest existing index number for this prefix
+        var highestStudentIndex = await _studentRepo.GetHighestIndexNumberForPrefixAsync(prefix);
+        var highestProfessorIndex = await _professorRepo.GetHighestIndexNumberForPrefixAsync(
+            prefix
+        );
+
+        var highestExisting = Math.Max(highestStudentIndex ?? 0, highestProfessorIndex ?? 0);
+
+        if (newValue < highestExisting)
+        {
+            throw new InvalidOperationException(
+                $"Cannot set counter to {newValue}. The highest existing index with prefix '{prefix}' is {highestExisting}."
             );
         }
 
@@ -136,6 +175,9 @@ public class IndexCounterService : IIndexCounterService
 
     public async Task DeleteCounterAsync(string prefix)
     {
+        // Normalize prefix to uppercase
+        prefix = prefix.ToUpper();
+
         var counter = await _indexRepo.GetCounterAsync(prefix);
 
         if (counter != null)

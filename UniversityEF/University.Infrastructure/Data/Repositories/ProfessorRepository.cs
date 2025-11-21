@@ -27,6 +27,28 @@ public class ProfessorRepository : IProfessorRepository
         return await _context.Professors.Include(p => p.Office).ToListAsync();
     }
 
+    public async Task<int?> GetHighestIndexNumberForPrefixAsync(string prefix)
+    {
+        var professors = await _context
+            .Professors.Where(p => p.UniversityIndex.StartsWith(prefix))
+            .Select(p => p.UniversityIndex)
+            .ToListAsync();
+
+        if (!professors.Any())
+            return null;
+
+        var numbers = professors
+            .Select(index =>
+            {
+                var numberPart = index.Substring(prefix.Length);
+                return int.TryParse(numberPart, out int num) ? (int?)num : null;
+            })
+            .Where(n => n.HasValue)
+            .Select(n => n!.Value);
+
+        return numbers.Any() ? numbers.Max() : null;
+    }
+
     public Task AddProfessorAsync(Professor professor)
     {
         _context.Professors.Add(professor);

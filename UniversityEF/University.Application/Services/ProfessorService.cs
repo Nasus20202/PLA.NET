@@ -31,11 +31,22 @@ public class ProfessorService : IProfessorService
         Address address
     )
     {
+        return await CreateProfessorAsync(firstName, lastName, academicTitle, address, "P");
+    }
+
+    public async Task<Professor> CreateProfessorAsync(
+        string firstName,
+        string lastName,
+        string academicTitle,
+        Address address,
+        string prefix
+    )
+    {
         await _unitOfWork.BeginTransactionAsync();
         try
         {
             var indeks = await _indexCounterService.GetNextIndexAsync(
-                "P",
+                prefix,
                 manageTransaction: false
             );
 
@@ -83,11 +94,14 @@ public class ProfessorService : IProfessorService
         if (professor == null)
             throw new InvalidOperationException($"Professor with ID {id} does not exist.");
 
+        // Extract prefix from UniversityIndex (e.g., "P101" -> "P", "PD5" -> "PD")
+        var prefix = ExtractPrefix(professor.UniversityIndex);
+
         await _unitOfWork.BeginTransactionAsync();
         try
         {
             await _indexCounterService.TryDecrementIndexAsync(
-                "P",
+                prefix,
                 professor.UniversityIndex,
                 manageTransaction: false
             );
@@ -100,6 +114,17 @@ public class ProfessorService : IProfessorService
             await _unitOfWork.RollbackTransactionAsync();
             throw;
         }
+    }
+
+    private static string ExtractPrefix(string universityIndex)
+    {
+        // Extract non-digit prefix from index (e.g., "P101" -> "P", "PH123" -> "PH")
+        int i = 0;
+        while (i < universityIndex.Length && !char.IsDigit(universityIndex[i]))
+        {
+            i++;
+        }
+        return universityIndex.Substring(0, i).ToUpper();
     }
 
     public async Task AssignOfficeAsync(int professorId, string officeNumber, string building)

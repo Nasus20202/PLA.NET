@@ -10,6 +10,13 @@ public interface IProfessorService
         string academicTitle,
         Address address
     );
+    Task<Professor> CreateProfessorAsync(
+        string firstName,
+        string lastName,
+        string academicTitle,
+        Address address,
+        string prefix
+    );
     Task<Professor?> GetProfessorByIdAsync(int id);
     Task<IEnumerable<Professor>> GetAllProfessorsAsync();
     Task UpdateProfessorAsync(Professor professor);

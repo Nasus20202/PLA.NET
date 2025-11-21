@@ -15,6 +15,7 @@ public class AddStudentDialog : Dialog
     private readonly TextField _streetField;
     private readonly TextField _cityField;
     private readonly TextField _postalCodeField;
+    private readonly TextField _prefixField;
     private readonly CheckBox _isMasterCheckBox;
     public bool Success { get; private set; }
 
@@ -23,7 +24,7 @@ public class AddStudentDialog : Dialog
         _serviceProvider = serviceProvider;
         Title = "Add New Student";
         Width = 70;
-        Height = 20;
+        Height = 22;
 
         var firstNameLabel = new Label("First Name:") { X = 1, Y = 1 };
         _firstNameField = new TextField("")
@@ -73,17 +74,25 @@ public class AddStudentDialog : Dialog
             Width = Dim.Fill(1),
         };
 
-        _isMasterCheckBox = new CheckBox("Master Student") { X = 1, Y = 13 };
+        var prefixLabel = new Label("Index Prefix (optional, default: S):") { X = 1, Y = 13 };
+        _prefixField = new TextField("S")
+        {
+            X = 1,
+            Y = 14,
+            Width = Dim.Fill(1),
+        };
+
+        _isMasterCheckBox = new CheckBox("Master Student") { X = 1, Y = 15 };
 
         var saveButton = new Button("Save")
         {
             X = 1,
-            Y = 15,
+            Y = 17,
             IsDefault = true,
         };
         saveButton.Clicked += OnSave;
 
-        var cancelButton = new Button("Cancel") { X = Pos.Right(saveButton) + 2, Y = 15 };
+        var cancelButton = new Button("Cancel") { X = Pos.Right(saveButton) + 2, Y = 17 };
         cancelButton.Clicked += () => TGuiApp.RequestStop();
 
         Add(
@@ -99,6 +108,8 @@ public class AddStudentDialog : Dialog
             _cityField,
             postalLabel,
             _postalCodeField,
+            prefixLabel,
+            _prefixField,
             _isMasterCheckBox,
             saveButton,
             cancelButton
@@ -126,6 +137,12 @@ public class AddStudentDialog : Dialog
             return;
         }
 
+        var prefix = _prefixField.Text.ToString()?.Trim()?.ToUpper();
+        if (string.IsNullOrWhiteSpace(prefix))
+        {
+            prefix = "S"; // Default
+        }
+
         try
         {
             using var scope = _serviceProvider.CreateScope();
@@ -140,15 +157,23 @@ public class AddStudentDialog : Dialog
 
             if (_isMasterCheckBox.Checked)
             {
-                await studentService.CreateMasterStudentAsync(firstName, lastName, year, address);
+                await studentService.CreateMasterStudentAsync(
+                    firstName: firstName,
+                    lastName: lastName,
+                    yearOfStudy: year,
+                    address: address,
+                    prefix: prefix,
+                    thesisTopic: null,
+                    supervisorId: null
+                );
             }
             else
             {
-                await studentService.CreateStudentAsync(firstName, lastName, year, address);
+                await studentService.CreateStudentAsync(firstName, lastName, year, address, prefix);
             }
 
             Success = true;
-            MessageBox.Query("Success", "Student created successfully!", "OK");
+            MessageBox.Query("Success", $"Student created with index prefix '{prefix}'!", "OK");
             TGuiApp.RequestStop();
         }
         catch (Exception ex)

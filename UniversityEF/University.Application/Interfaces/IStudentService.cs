@@ -10,11 +10,27 @@ public interface IStudentService
         int yearOfStudy,
         Address address
     );
+    Task<Student> CreateStudentAsync(
+        string firstName,
+        string lastName,
+        int yearOfStudy,
+        Address address,
+        string prefix
+    );
     Task<MasterStudent> CreateMasterStudentAsync(
         string firstName,
         string lastName,
         int yearOfStudy,
         Address address,
+        string? thesisTopic = null,
+        int? supervisorId = null
+    );
+    Task<MasterStudent> CreateMasterStudentAsync(
+        string firstName,
+        string lastName,
+        int yearOfStudy,
+        Address address,
+        string prefix,
         string? thesisTopic = null,
         int? supervisorId = null
     );

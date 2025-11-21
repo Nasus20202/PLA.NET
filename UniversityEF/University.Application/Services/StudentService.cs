@@ -28,11 +28,22 @@ public class StudentService : IStudentService
         Address address
     )
     {
+        return await CreateStudentAsync(firstName, lastName, yearOfStudy, address, "S");
+    }
+
+    public async Task<Student> CreateStudentAsync(
+        string firstName,
+        string lastName,
+        int yearOfStudy,
+        Address address,
+        string prefix
+    )
+    {
         await _unitOfWork.BeginTransactionAsync();
         try
         {
             var indeks = await _indexCounterService.GetNextIndexAsync(
-                "S",
+                prefix,
                 manageTransaction: false
             );
 
@@ -67,11 +78,32 @@ public class StudentService : IStudentService
         int? supervisorId = null
     )
     {
+        return await CreateMasterStudentAsync(
+            firstName,
+            lastName,
+            yearOfStudy,
+            address,
+            "S",
+            thesisTopic,
+            supervisorId
+        );
+    }
+
+    public async Task<MasterStudent> CreateMasterStudentAsync(
+        string firstName,
+        string lastName,
+        int yearOfStudy,
+        Address address,
+        string prefix,
+        string? thesisTopic = null,
+        int? supervisorId = null
+    )
+    {
         await _unitOfWork.BeginTransactionAsync();
         try
         {
             var indeks = await _indexCounterService.GetNextIndexAsync(
-                "S",
+                prefix,
                 manageTransaction: false
             );
 
@@ -121,11 +153,13 @@ public class StudentService : IStudentService
         if (student == null)
             throw new InvalidOperationException($"Student with ID {id} does not exist.");
 
+        var prefix = ExtractPrefix(student.UniversityIndex);
+
         await _unitOfWork.BeginTransactionAsync();
         try
         {
             await _indexCounterService.TryDecrementIndexAsync(
-                "S",
+                prefix,
                 student.UniversityIndex,
                 manageTransaction: false
             );
@@ -138,5 +172,15 @@ public class StudentService : IStudentService
             await _unitOfWork.RollbackTransactionAsync();
             throw;
         }
+    }
+
+    private static string ExtractPrefix(string universityIndex)
+    {
+        int i = 0;
+        while (i < universityIndex.Length && !char.IsDigit(universityIndex[i]))
+        {
+            i++;
+        }
+        return universityIndex.Substring(0, i).ToUpper();
     }
 }
