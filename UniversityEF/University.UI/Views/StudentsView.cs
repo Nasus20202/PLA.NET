@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui;
 using University.Application.Interfaces;
 using University.Domain.Entities;
+using University.UI.Dialogs;
 using TGuiApp = Terminal.Gui.Application;
 
 namespace University.UI.Views;
@@ -10,6 +11,8 @@ public class StudentsView : BaseView
 {
     private ListView _listView = null!;
     private List<Student> _students = new();
+    private Button _addButton = null!;
+    private Button _editButton = null!;
     private Button _deleteButton = null!;
     private Button _refreshButton = null!;
     private Label _statusLabel = null!;
@@ -34,30 +37,73 @@ public class StudentsView : BaseView
             X = 0,
             Y = 1,
             Width = Dim.Fill(),
-            Height = Dim.Fill(2),
+            Height = Dim.Fill(3),
         };
 
         _listView.SelectedItemChanged += OnSelectionChanged;
 
-        var buttonY = Pos.AnchorEnd(1);
+        // First row of buttons
+        var buttonY1 = Pos.AnchorEnd(2);
 
-        _refreshButton = new Button("Refresh") { X = 1, Y = buttonY };
-        _refreshButton.Clicked += async () => await LoadDataAsync();
+        _addButton = new Button("Add") { X = 1, Y = buttonY1 };
+        _addButton.Clicked += OnAddClicked;
 
-        _deleteButton = new Button("Delete Selected")
+        _editButton = new Button("Edit")
         {
-            X = Pos.Right(_refreshButton) + 2,
-            Y = buttonY,
+            X = Pos.Right(_addButton) + 1,
+            Y = buttonY1,
+            Enabled = false,
+        };
+        _editButton.Clicked += OnEditClicked;
+
+        _deleteButton = new Button("Delete")
+        {
+            X = Pos.Right(_editButton) + 1,
+            Y = buttonY1,
             Enabled = false,
         };
         _deleteButton.Clicked += OnDeleteClicked;
 
-        Add(_statusLabel, _listView, _refreshButton, _deleteButton);
+        // Second row
+        var buttonY2 = Pos.AnchorEnd(1);
+
+        _refreshButton = new Button("Refresh") { X = 1, Y = buttonY2 };
+        _refreshButton.Clicked += async () => await LoadDataAsync();
+
+        Add(_statusLabel, _listView, _addButton, _editButton, _deleteButton, _refreshButton);
     }
 
     private void OnSelectionChanged(ListViewItemEventArgs args)
     {
-        _deleteButton.Enabled = args.Item >= 0 && args.Item < _students.Count;
+        var hasSelection = args.Item >= 0 && args.Item < _students.Count;
+        _editButton.Enabled = hasSelection;
+        _deleteButton.Enabled = hasSelection;
+    }
+
+    private async void OnAddClicked()
+    {
+        var dialog = new AddStudentDialog(ServiceProvider);
+        TGuiApp.Run(dialog);
+
+        if (dialog.Success)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async void OnEditClicked()
+    {
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _students.Count)
+            return;
+
+        var student = _students[_listView.SelectedItem];
+        var dialog = new UpdateStudentDialog(ServiceProvider, student);
+        TGuiApp.Run(dialog);
+
+        if (dialog.Success)
+        {
+            await LoadDataAsync();
+        }
     }
 
     private async void OnDeleteClicked()
@@ -108,8 +154,11 @@ public class StudentsView : BaseView
                 var items = _students
                     .Select(s =>
                     {
-                        var type = s is MasterStudent ? "[Master]" : "[Bachelor]";
-                        return $"ID:{s.Id, 4} | {type, -10} | {s.UniversityIndex, -10} | {s.FirstName} {s.LastName} | Year {s.YearOfStudy}";
+                        var type = s is MasterStudent ? "[Master]" : "[Bach]";
+                        var fullName = $"{s.FirstName} {s.LastName}";
+                        var city = s.ResidenceAddress.City ?? "";
+                        var street = s.ResidenceAddress.Street ?? "";
+                        return $"ID:{s.Id, 4} | {type, -8} | {s.UniversityIndex, -10} | {fullName, -25} | Y:{s.YearOfStudy} | {city, -20} | {street}";
                     })
                     .ToList();
 

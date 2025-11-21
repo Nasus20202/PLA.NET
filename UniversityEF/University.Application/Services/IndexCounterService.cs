@@ -118,6 +118,22 @@ public class IndexCounterService : IIndexCounterService
         return await _indexRepo.GetAllIndexCountersAsync();
     }
 
+    public async Task UpdateCounterAsync(string prefix, int newValue)
+    {
+        var counter = await _indexRepo.GetCounterAsync(prefix);
+
+        if (counter == null)
+        {
+            throw new InvalidOperationException(
+                $"Counter for prefix '{prefix}' does not exist. Initialize the counter first."
+            );
+        }
+
+        counter.CurrentValue = newValue;
+        await _indexRepo.UpdateIndexCounterAsync(counter);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
     public async Task DeleteCounterAsync(string prefix)
     {
         var counter = await _indexRepo.GetCounterAsync(prefix);

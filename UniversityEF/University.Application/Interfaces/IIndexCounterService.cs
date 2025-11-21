@@ -13,5 +13,6 @@ public interface IIndexCounterService
     Task InitializeCounterAsync(string prefix, int startValue);
     Task<IndexCounter?> GetCounterAsync(string prefix);
     Task<IEnumerable<IndexCounter>> GetAllCountersAsync();
+    Task UpdateCounterAsync(string prefix, int newValue);
     Task DeleteCounterAsync(string prefix);
 }

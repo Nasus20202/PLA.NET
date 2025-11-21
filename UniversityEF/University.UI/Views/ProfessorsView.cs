@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui;
 using University.Application.Interfaces;
 using University.Domain.Entities;
+using University.UI.Dialogs;
 using TGuiApp = Terminal.Gui.Application;
 
 namespace University.UI.Views;
@@ -10,6 +11,8 @@ public class ProfessorsView : BaseView
 {
     private ListView _listView = null!;
     private List<Professor> _professors = new();
+    private Button _addButton = null!;
+    private Button _editButton = null!;
     private Button _deleteButton = null!;
     private Button _refreshButton = null!;
     private Label _statusLabel = null!;
@@ -34,30 +37,73 @@ public class ProfessorsView : BaseView
             X = 0,
             Y = 1,
             Width = Dim.Fill(),
-            Height = Dim.Fill(2),
+            Height = Dim.Fill(3),
         };
 
         _listView.SelectedItemChanged += OnSelectionChanged;
 
-        var buttonY = Pos.AnchorEnd(1);
+        // First row of buttons
+        var buttonY1 = Pos.AnchorEnd(2);
 
-        _refreshButton = new Button("Refresh") { X = 1, Y = buttonY };
-        _refreshButton.Clicked += async () => await LoadDataAsync();
+        _addButton = new Button("Add") { X = 1, Y = buttonY1 };
+        _addButton.Clicked += OnAddClicked;
 
-        _deleteButton = new Button("Delete Selected")
+        _editButton = new Button("Edit")
         {
-            X = Pos.Right(_refreshButton) + 2,
-            Y = buttonY,
+            X = Pos.Right(_addButton) + 1,
+            Y = buttonY1,
+            Enabled = false,
+        };
+        _editButton.Clicked += OnEditClicked;
+
+        _deleteButton = new Button("Delete")
+        {
+            X = Pos.Right(_editButton) + 1,
+            Y = buttonY1,
             Enabled = false,
         };
         _deleteButton.Clicked += OnDeleteClicked;
 
-        Add(_statusLabel, _listView, _refreshButton, _deleteButton);
+        // Second row
+        var buttonY2 = Pos.AnchorEnd(1);
+
+        _refreshButton = new Button("Refresh") { X = 1, Y = buttonY2 };
+        _refreshButton.Clicked += async () => await LoadDataAsync();
+
+        Add(_statusLabel, _listView, _addButton, _editButton, _deleteButton, _refreshButton);
     }
 
     private void OnSelectionChanged(ListViewItemEventArgs args)
     {
-        _deleteButton.Enabled = args.Item >= 0 && args.Item < _professors.Count;
+        var hasSelection = args.Item >= 0 && args.Item < _professors.Count;
+        _editButton.Enabled = hasSelection;
+        _deleteButton.Enabled = hasSelection;
+    }
+
+    private async void OnAddClicked()
+    {
+        var dialog = new AddProfessorDialog(ServiceProvider);
+        TGuiApp.Run(dialog);
+
+        if (dialog.Success)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async void OnEditClicked()
+    {
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _professors.Count)
+            return;
+
+        var professor = _professors[_listView.SelectedItem];
+        var dialog = new UpdateProfessorDialog(ServiceProvider, professor);
+        TGuiApp.Run(dialog);
+
+        if (dialog.Success)
+        {
+            await LoadDataAsync();
+        }
     }
 
     private async void OnDeleteClicked()
@@ -107,8 +153,12 @@ public class ProfessorsView : BaseView
             {
                 var items = _professors
                     .Select(p =>
-                        $"ID:{p.Id, 4} | {p.UniversityIndex, -10} | {p.AcademicTitle} {p.FirstName} {p.LastName}"
-                    )
+                    {
+                        var fullName = $"{p.AcademicTitle} {p.FirstName} {p.LastName}";
+                        var city = p.ResidenceAddress.City ?? "";
+                        var street = p.ResidenceAddress.Street ?? "";
+                        return $"ID:{p.Id, 4} | {p.UniversityIndex, -10} | {fullName, -30} | {city, -20} | {street}";
+                    })
                     .ToList();
 
                 _listView.SetSource(items);

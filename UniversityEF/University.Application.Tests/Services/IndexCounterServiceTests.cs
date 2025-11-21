@@ -221,4 +221,38 @@ public class IndexCounterServiceTests
         _mockRepo.Verify(r => r.DeleteIndexCounterAsync(It.IsAny<IndexCounter>()), Times.Never);
         _mockUnit.Verify(u => u.SaveChangesAsync(), Times.Never);
     }
+
+    [Fact]
+    public async Task UpdateCounterAsync_ShouldUpdateCounter_WhenExists()
+    {
+        // Arrange
+        var prefix = "D";
+        var counter = new IndexCounter { Prefix = prefix, CurrentValue = 10 };
+        _mockRepo.Setup(r => r.GetCounterAsync(prefix)).ReturnsAsync(counter);
+
+        // Act
+        await _service.UpdateCounterAsync(prefix, 50);
+
+        // Assert
+        _mockRepo.Verify(
+            r => r.UpdateIndexCounterAsync(It.Is<IndexCounter>(c => c.CurrentValue == 50)),
+            Times.Once
+        );
+        _mockUnit.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateCounterAsync_ShouldThrow_WhenCounterNotExists()
+    {
+        // Arrange
+        _mockRepo
+            .Setup(r => r.GetCounterAsync(It.IsAny<string>()))
+            .ReturnsAsync((IndexCounter?)null);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _service.UpdateCounterAsync("D", 100)
+        );
+        _mockRepo.Verify(r => r.UpdateIndexCounterAsync(It.IsAny<IndexCounter>()), Times.Never);
+    }
 }

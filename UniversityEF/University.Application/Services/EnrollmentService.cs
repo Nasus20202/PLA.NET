@@ -36,6 +36,30 @@ public class EnrollmentService : IEnrollmentService
         return enrollment;
     }
 
+    public async Task<Enrollment> EnrollStudentAsync(int studentId, int courseId, string semester)
+    {
+        if (!int.TryParse(semester, out int semesterNum))
+            throw new ArgumentException("Semester must be a valid number.", nameof(semester));
+
+        var enrollments = await _repository.GetEnrollmentsByStudentIdAsync(studentId);
+        var existing = enrollments.FirstOrDefault(e => e.CourseId == courseId);
+
+        if (existing != null)
+            throw new InvalidOperationException("Student is already enrolled in this course.");
+
+        var enrollment = new Enrollment
+        {
+            StudentId = studentId,
+            CourseId = courseId,
+            Semester = semesterNum,
+        };
+
+        await _repository.AddEnrollmentAsync(enrollment);
+        await _unitOfWork.SaveChangesAsync();
+
+        return enrollment;
+    }
+
     public async Task UpdateGradeAsync(int enrollmentId, double ocena)
     {
         var enrollment = await _repository.GetEnrollmentByIdAsync(enrollmentId);
@@ -57,6 +81,11 @@ public class EnrollmentService : IEnrollmentService
     public async Task<IEnumerable<Enrollment>> GetCourseEnrollmentsAsync(int kursId)
     {
         return await _repository.GetEnrollmentsByCourseIdAsync(kursId);
+    }
+
+    public async Task<IEnumerable<Enrollment>> GetAllEnrollmentsAsync()
+    {
+        return await _repository.GetAllEnrollmentsAsync();
     }
 
     public async Task UnenrollStudentAsync(int enrollmentId)

@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Terminal.Gui;
 using University.Application.Interfaces;
 using University.Domain.Entities;
+using University.UI.Dialogs;
 using TGuiApp = Terminal.Gui.Application;
 
 namespace University.UI.Views;
@@ -10,6 +11,9 @@ public class DepartmentsView : BaseView
 {
     private ListView _listView = null!;
     private List<Department> _departments = new();
+    private Button _addButton = null!;
+    private Button _editButton = null!;
+    private Button _deleteButton = null!;
     private Button _refreshButton = null!;
     private Label _statusLabel = null!;
 
@@ -33,15 +37,105 @@ public class DepartmentsView : BaseView
             X = 0,
             Y = 1,
             Width = Dim.Fill(),
-            Height = Dim.Fill(2),
+            Height = Dim.Fill(3),
         };
 
-        var buttonY = Pos.AnchorEnd(1);
+        _listView.SelectedItemChanged += OnSelectionChanged;
 
-        _refreshButton = new Button("Refresh") { X = 1, Y = buttonY };
+        // First row of buttons
+        var buttonY1 = Pos.AnchorEnd(2);
+
+        _addButton = new Button("Add") { X = 1, Y = buttonY1 };
+        _addButton.Clicked += OnAddClicked;
+
+        _editButton = new Button("Edit")
+        {
+            X = Pos.Right(_addButton) + 1,
+            Y = buttonY1,
+            Enabled = false,
+        };
+        _editButton.Clicked += OnEditClicked;
+
+        _deleteButton = new Button("Delete")
+        {
+            X = Pos.Right(_editButton) + 1,
+            Y = buttonY1,
+            Enabled = false,
+        };
+        _deleteButton.Clicked += OnDeleteClicked;
+
+        // Second row
+        var buttonY2 = Pos.AnchorEnd(1);
+
+        _refreshButton = new Button("Refresh") { X = 1, Y = buttonY2 };
         _refreshButton.Clicked += async () => await LoadDataAsync();
 
-        Add(_statusLabel, _listView, _refreshButton);
+        Add(_statusLabel, _listView, _addButton, _editButton, _deleteButton, _refreshButton);
+    }
+
+    private void OnSelectionChanged(ListViewItemEventArgs args)
+    {
+        var hasSelection = args.Item >= 0 && args.Item < _departments.Count;
+        _editButton.Enabled = hasSelection;
+        _deleteButton.Enabled = hasSelection;
+    }
+
+    private async void OnAddClicked()
+    {
+        var dialog = new AddDepartmentDialog(ServiceProvider);
+        TGuiApp.Run(dialog);
+
+        if (dialog.Success)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async void OnEditClicked()
+    {
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _departments.Count)
+            return;
+
+        var department = _departments[_listView.SelectedItem];
+        var dialog = new UpdateDepartmentDialog(ServiceProvider, department);
+        TGuiApp.Run(dialog);
+
+        if (dialog.Success)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async void OnDeleteClicked()
+    {
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _departments.Count)
+            return;
+
+        var department = _departments[_listView.SelectedItem];
+
+        var confirm = MessageBox.Query(
+            "Confirm Delete",
+            $"Delete department:\n{department.Name}?\n\nWarning: This will also delete all courses in this department!",
+            "Yes",
+            "No"
+        );
+
+        if (confirm == 0)
+        {
+            try
+            {
+                using var scope = ServiceProvider.CreateScope();
+                var departmentService =
+                    scope.ServiceProvider.GetRequiredService<IDepartmentService>();
+                await departmentService.DeleteDepartmentAsync(department.Id);
+                MessageBox.Query("Success", "Department deleted successfully!", "OK");
+                await LoadDataAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.ErrorQuery("Error", $"Failed to delete department:\n{ex.Message}", "OK");
+            }
+        }
     }
 
     public override async Task LoadDataAsync()

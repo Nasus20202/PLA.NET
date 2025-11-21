@@ -61,7 +61,9 @@ public class MainWindow : Window
                         new MenuItem("_Professors", "", () => ShowView<ProfessorsView>()),
                         new MenuItem("_Courses", "", () => ShowView<CoursesView>()),
                         new MenuItem("_Departments", "", () => ShowView<DepartmentsView>()),
+                        new MenuItem("_Offices", "", () => ShowView<OfficesView>()),
                         new MenuItem("C_ounters", "", () => ShowView<CountersView>()),
+                        new MenuItem("_Enrollments", "", () => ShowView<EnrollmentsView>()),
                     }
                 ),
                 new MenuBarItem(

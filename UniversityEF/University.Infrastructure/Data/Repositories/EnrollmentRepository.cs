@@ -35,6 +35,15 @@ public class EnrollmentRepository : IEnrollmentRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Enrollment>> GetAllEnrollmentsAsync()
+    {
+        return await _context
+            .Enrollments.Include(e => e.Student)
+            .Include(e => e.Course)
+            .ThenInclude(c => c.Department)
+            .ToListAsync();
+    }
+
     public Task AddEnrollmentAsync(Enrollment enrollment)
     {
         _context.Enrollments.Add(enrollment);

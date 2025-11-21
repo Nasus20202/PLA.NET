@@ -45,6 +45,7 @@ public static class ServiceConfiguration
         services.AddScoped<ICourseService, CourseService>();
         services.AddScoped<IEnrollmentService, EnrollmentService>();
         services.AddScoped<IDepartmentService, DepartmentService>();
+        services.AddScoped<IOfficeService, OfficeService>();
         services.AddScoped<IQueryService, QueryService>();
         services.AddScoped<IDataGeneratorService, DataGeneratorService>();
     }

@@ -7,18 +7,18 @@ using TGuiApp = Terminal.Gui.Application;
 
 namespace University.UI.Views;
 
-public class CountersView : BaseView
+public class OfficesView : BaseView
 {
     private ListView _listView = null!;
-    private List<IndexCounter> _counters = new();
+    private List<Office> _offices = new();
     private Button _addButton = null!;
     private Button _updateButton = null!;
     private Button _deleteButton = null!;
     private Button _refreshButton = null!;
     private Label _statusLabel = null!;
 
-    public CountersView(IServiceProvider serviceProvider)
-        : base(serviceProvider, "Index Counters - CRUD Management")
+    public OfficesView(IServiceProvider serviceProvider)
+        : base(serviceProvider, "Offices - CRUD Management")
     {
         InitializeComponents();
     }
@@ -75,14 +75,14 @@ public class CountersView : BaseView
 
     private void OnSelectionChanged(ListViewItemEventArgs args)
     {
-        var hasSelection = args.Item >= 0 && args.Item < _counters.Count;
+        var hasSelection = args.Item >= 0 && args.Item < _offices.Count;
         _updateButton.Enabled = hasSelection;
         _deleteButton.Enabled = hasSelection;
     }
 
     private async void OnAddClicked()
     {
-        var dialog = new AddCounterDialog(ServiceProvider);
+        var dialog = new AddOfficeDialog(ServiceProvider);
         TGuiApp.Run(dialog);
 
         if (dialog.Success)
@@ -93,11 +93,11 @@ public class CountersView : BaseView
 
     private async void OnUpdateClicked()
     {
-        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _counters.Count)
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _offices.Count)
             return;
 
-        var counter = _counters[_listView.SelectedItem];
-        var dialog = new UpdateCounterDialog(ServiceProvider, counter);
+        var office = _offices[_listView.SelectedItem];
+        var dialog = new UpdateOfficeDialog(ServiceProvider, office);
         TGuiApp.Run(dialog);
 
         if (dialog.Success)
@@ -108,14 +108,14 @@ public class CountersView : BaseView
 
     private async void OnDeleteClicked()
     {
-        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _counters.Count)
+        if (_listView.SelectedItem < 0 || _listView.SelectedItem >= _offices.Count)
             return;
 
-        var counter = _counters[_listView.SelectedItem];
+        var office = _offices[_listView.SelectedItem];
 
         var confirm = MessageBox.Query(
             "Confirm Delete",
-            $"Delete counter with prefix '{counter.Prefix}'?\nCurrent value: {counter.CurrentValue}\n\nWarning: This cannot be undone!",
+            $"Delete office:\n{office.OfficeNumber} in {office.Building}\nProfessor ID: {office.ProfessorId}?\n\nWarning: This cannot be undone!",
             "Yes",
             "No"
         );
@@ -125,15 +125,14 @@ public class CountersView : BaseView
             try
             {
                 using var scope = ServiceProvider.CreateScope();
-                var counterService =
-                    scope.ServiceProvider.GetRequiredService<IIndexCounterService>();
-                await counterService.DeleteCounterAsync(counter.Prefix);
-                MessageBox.Query("Success", "Counter deleted successfully!", "OK");
+                var officeService = scope.ServiceProvider.GetRequiredService<IOfficeService>();
+                await officeService.DeleteOfficeAsync(office.Id);
+                MessageBox.Query("Success", "Office deleted successfully!", "OK");
                 await LoadDataAsync();
             }
             catch (Exception ex)
             {
-                MessageBox.ErrorQuery("Error", $"Failed to delete counter:\n{ex.Message}", "OK");
+                MessageBox.ErrorQuery("Error", $"Failed to delete office:\n{ex.Message}", "OK");
             }
         }
     }
@@ -142,21 +141,28 @@ public class CountersView : BaseView
     {
         try
         {
-            _statusLabel.Text = "Loading counters...";
+            _statusLabel.Text = "Loading offices...";
             TGuiApp.MainLoop.Invoke(() => SetNeedsDisplay());
 
             using var scope = ServiceProvider.CreateScope();
-            var counterService = scope.ServiceProvider.GetRequiredService<IIndexCounterService>();
-            _counters = (await counterService.GetAllCountersAsync()).ToList();
+            var officeService = scope.ServiceProvider.GetRequiredService<IOfficeService>();
+            _offices = (await officeService.GetAllOfficesAsync()).ToList();
 
             TGuiApp.MainLoop.Invoke(() =>
             {
-                var items = _counters
-                    .Select(c => $"Prefix: {c.Prefix, -10} | Current Value: {c.CurrentValue, 6}")
+                var items = _offices
+                    .Select(o =>
+                    {
+                        var professorName =
+                            o.Professor != null
+                                ? $"{o.Professor.FirstName} {o.Professor.LastName}"
+                                : "N/A";
+                        return $"ID:{o.Id, 4} | Office: {o.OfficeNumber, -10} | Building: {o.Building, -15} | Professor: {professorName}";
+                    })
                     .ToList();
 
                 _listView.SetSource(items);
-                _statusLabel.Text = $"Total counters: {_counters.Count}";
+                _statusLabel.Text = $"Total offices: {_offices.Count}";
                 _updateButton.Enabled = false;
                 _deleteButton.Enabled = false;
                 SetNeedsDisplay();
@@ -166,8 +172,8 @@ public class CountersView : BaseView
         {
             TGuiApp.MainLoop.Invoke(() =>
             {
-                _statusLabel.Text = "Error loading counters";
-                MessageBox.ErrorQuery("Error", $"Failed to load counters:\n{ex.Message}", "OK");
+                _statusLabel.Text = "Error loading offices";
+                MessageBox.ErrorQuery("Error", $"Failed to load offices:\n{ex.Message}", "OK");
             });
         }
     }

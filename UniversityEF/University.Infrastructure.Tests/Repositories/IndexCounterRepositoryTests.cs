@@ -201,4 +201,52 @@ public class IndexCounterRepositoryTests : RepositoryTestBase
         var finalCounter = await repo.GetCounterAsync("C");
         Assert.Equal(58, finalCounter!.CurrentValue);
     }
+
+    [Fact]
+    public async Task UpdateIndexCounterAsync_UpdatesCounterValue()
+    {
+        // Arrange
+        using var ctx = NewContext();
+        var repo = new IndexCounterRepository(ctx);
+        var counter = new IndexCounter { Prefix = "D", CurrentValue = 0 };
+        await repo.AddCounterAsync(counter);
+        await ctx.SaveChangesAsync();
+
+        // Act
+        counter.CurrentValue = 100;
+        await repo.UpdateIndexCounterAsync(counter);
+        await ctx.SaveChangesAsync();
+
+        using var ctx2 = NewContext();
+        var repo2 = new IndexCounterRepository(ctx2);
+        var updated = await repo2.GetCounterAsync("D");
+
+        // Assert
+        Assert.NotNull(updated);
+        Assert.Equal(100, updated!.CurrentValue);
+    }
+
+    [Fact]
+    public async Task UpdateIndexCounterAsync_CanSetCounterToZero()
+    {
+        // Arrange
+        using var ctx = NewContext();
+        var repo = new IndexCounterRepository(ctx);
+        var counter = new IndexCounter { Prefix = "E", CurrentValue = 50 };
+        await repo.AddCounterAsync(counter);
+        await ctx.SaveChangesAsync();
+
+        // Act
+        counter.CurrentValue = 0;
+        await repo.UpdateIndexCounterAsync(counter);
+        await ctx.SaveChangesAsync();
+
+        using var ctx2 = NewContext();
+        var repo2 = new IndexCounterRepository(ctx2);
+        var updated = await repo2.GetCounterAsync("E");
+
+        // Assert
+        Assert.NotNull(updated);
+        Assert.Equal(0, updated!.CurrentValue);
+    }
 }
