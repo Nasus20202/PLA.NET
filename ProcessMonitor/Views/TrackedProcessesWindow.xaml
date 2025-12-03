@@ -1,0 +1,100 @@
+﻿<Window
+  x:Class="ProcessMonitor.Views.TrackedProcessesWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:converters="clr-namespace:ProcessMonitor.Converters"
+  Title="Tracked Processes"
+  Height="500"
+  Width="900"
+>
+  <Window.Resources>
+    <converters:TimeSpanToStringConverter x:Key="TimeSpanConverter" />
+  </Window.Resources>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+    <ToolBar Grid.Row="0">
+      <Button Content="Refresh" Command="{Binding RefreshCommand}" Margin="2" />
+    </ToolBar>
+    <DataGrid
+      Grid.Row="1"
+      ItemsSource="{Binding TrackedProcesses}"
+      AutoGenerateColumns="False"
+      IsReadOnly="True"
+      SelectionMode="Single"
+      Margin="5"
+    >
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Process ID" Binding="{Binding ProcessId}" Width="100" />
+        <DataGridTextColumn Header="Process Name" Binding="{Binding ProcessName}" Width="200" />
+        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
+        <DataGridTextColumn
+          Header="Tracking Started"
+          Binding="{Binding TrackingStartTime, StringFormat='HH:mm:ss'}"
+          Width="120"
+        />
+        <DataGridTextColumn
+          Header="Tracking Ended"
+          Binding="{Binding TrackingEndTime, StringFormat='HH:mm:ss'}"
+          Width="120"
+        />
+        <DataGridTextColumn
+          Header="Duration"
+          Binding="{Binding TrackingDuration, Converter={StaticResource TimeSpanConverter}}"
+          Width="120"
+        />
+        <DataGridTextColumn
+          Header="Memory Samples"
+          Binding="{Binding MemorySamples.Count}"
+          Width="120"
+        />
+        <DataGridTemplateColumn Header="Actions" Width="100">
+          <DataGridTemplateColumn.CellTemplate>
+            <DataTemplate>
+              <Button
+                Content="Stop"
+                Command="{Binding DataContext.StopTrackingCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                CommandParameter="{Binding}"
+                IsEnabled="{Binding IsActive}"
+                Padding="5,2"
+              />
+            </DataTemplate>
+          </DataGridTemplateColumn.CellTemplate>
+        </DataGridTemplateColumn>
+      </DataGrid.Columns>
+      <DataGrid.RowStyle>
+        <Style TargetType="DataGridRow">
+          <Style.Triggers>
+            <DataTrigger Binding="{Binding IsActive}" Value="False">
+              <Setter Property="Foreground" Value="Gray" />
+            </DataTrigger>
+          </Style.Triggers>
+          <Setter Property="ToolTip">
+            <Setter.Value>
+              <ToolTip>
+                <StackPanel>
+                  <TextBlock FontWeight="Bold" Text="{Binding ProcessName}" />
+                  <TextBlock>
+                    <Run Text="Started: " />
+                    <Run Text="{Binding TrackingStartTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" />
+                  </TextBlock>
+                  <TextBlock>
+                    <Run Text="Duration: " />
+                    <Run Text="{Binding TrackingDuration, Converter={StaticResource TimeSpanConverter}}" />
+                  </TextBlock>
+                  <TextBlock>
+                    <Run Text="Memory Samples: " />
+                    <Run Text="{Binding MemorySamples.Count}" />
+                  </TextBlock>
+                  <TextBlock Text="{Binding Status}" FontStyle="Italic" />
+                </StackPanel>
+              </ToolTip>
+            </Setter.Value>
+          </Setter>
+        </Style>
+      </DataGrid.RowStyle>
+    </DataGrid>
+  </Grid>
+</Window>

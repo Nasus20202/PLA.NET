@@ -1,0 +1,152 @@
+﻿<Window
+  x:Class="ProcessMonitor.MainWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:uc="clr-namespace:ProcessMonitor.UserControls"
+  xmlns:converters="clr-namespace:ProcessMonitor.Converters"
+  xmlns:diag="clr-namespace:System.Diagnostics;assembly=System.Diagnostics.Process"
+  mc:Ignorable="d"
+  Title="Process Monitor"
+  Height="700"
+  Width="1200"
+>
+  <Window.Resources>
+    <converters:BoolToTrackingStatusConverter x:Key="TrackingStatusConverter" />
+    <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </Window.Resources>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="2*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="3*" />
+    </Grid.RowDefinitions>
+    <ToolBar Grid.Row="0" Padding="5">
+      <Button Content="Refresh" Command="{Binding RefreshCommand}" Margin="2" Padding="10,3" />
+      <Separator />
+      <Button Command="{Binding ToggleAutoRefreshCommand}" Margin="2" Padding="10,3">
+        <Button.Style>
+          <Style TargetType="Button">
+            <Setter Property="Content" Value="Start Auto-Refresh" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsAutoRefreshEnabled}" Value="True">
+                <Setter Property="Content" Value="Stop Auto-Refresh" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </Button.Style>
+      </Button>
+      <TextBlock Text="Interval (ms):" VerticalAlignment="Center" Margin="5,0" />
+      <TextBox
+        Text="{Binding RefreshInterval, UpdateSourceTrigger=PropertyChanged}"
+        Width="60"
+        VerticalAlignment="Center"
+        Margin="2"
+      />
+      <Separator />
+      <Button
+        Content="Tracked Processes"
+        Command="{Binding ShowTrackedProcessesCommand}"
+        Margin="2"
+        Padding="10,3"
+      />
+      <Separator />
+      <TextBlock Text="Sampling (ms):" VerticalAlignment="Center" Margin="5,0" />
+      <TextBox
+        Text="{Binding SamplingInterval, UpdateSourceTrigger=PropertyChanged}"
+        Width="60"
+        VerticalAlignment="Center"
+        Margin="2"
+      />
+    </ToolBar>
+    <GroupBox Header="Filter" Grid.Row="1" Margin="5">
+      <Grid Margin="5">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,10,0" />
+        <TextBox
+          Grid.Column="1"
+          Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}"
+          ToolTip="Filter by process name or ID"
+        />
+      </Grid>
+    </GroupBox>
+    <GroupBox Header="Process List" Grid.Row="2" Margin="5">
+      <DataGrid
+        ItemsSource="{Binding ProcessesView}"
+        SelectedItem="{Binding SelectedProcess}"
+        AutoGenerateColumns="False"
+        IsReadOnly="True"
+        SelectionMode="Single"
+      >
+        <DataGrid.Columns>
+          <DataGridTextColumn Header="PID" Binding="{Binding Id}" Width="80" />
+          <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="200" />
+          <DataGridTextColumn Header="Memory (MB)" Binding="{Binding WorkingSetMB}" Width="120" />
+          <DataGridTextColumn Header="Priority" Binding="{Binding Priority}" Width="100" />
+          <DataGridTextColumn Header="Threads" Binding="{Binding ThreadCount}" Width="80" />
+          <DataGridTextColumn Header="Handles" Binding="{Binding HandleCount}" Width="80" />
+          <DataGridCheckBoxColumn
+            Header="Tracked"
+            Binding="{Binding IsTracked}"
+            Width="70"
+            IsReadOnly="True"
+          />
+        </DataGrid.Columns>
+        <DataGrid.RowStyle>
+          <Style TargetType="DataGridRow">
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsTracked}" Value="True">
+                <Setter Property="Background" Value="LightGreen" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </DataGrid.RowStyle>
+      </DataGrid>
+    </GroupBox>
+    <GroupBox Header="Actions" Grid.Row="3" Margin="5">
+      <StackPanel Orientation="Horizontal" Margin="5">
+        <Button Command="{Binding ToggleTrackingCommand}" Margin="5" Padding="10,5">
+          <Button.Style>
+            <Style TargetType="Button">
+              <Setter Property="Content" Value="Start Tracking" />
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding SelectedProcess.IsTracked}" Value="True">
+                  <Setter Property="Content" Value="Stop Tracking" />
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </Button.Style>
+        </Button>
+        <Button
+          Content="Kill Process"
+          Command="{Binding KillProcessCommand}"
+          Margin="5"
+          Padding="10,5"
+          Background="IndianRed"
+        />
+        <TextBlock Text="Priority:" VerticalAlignment="Center" Margin="10,0,5,0" />
+        <ComboBox Width="120" Margin="5" SelectionChanged="PriorityComboBox_SelectionChanged">
+          <ComboBoxItem Content="Idle" Tag="Idle" />
+          <ComboBoxItem Content="Below Normal" Tag="BelowNormal" />
+          <ComboBoxItem Content="Normal" Tag="Normal" />
+          <ComboBoxItem Content="Above Normal" Tag="AboveNormal" />
+          <ComboBoxItem Content="High" Tag="High" />
+          <ComboBoxItem Content="Realtime" Tag="RealTime" />
+        </ComboBox>
+      </StackPanel>
+    </GroupBox>
+    <GroupBox Header="Process Details" Grid.Row="4" Margin="5">
+      <uc:ProcessDetailsControl
+        DataContext="{Binding SelectedProcess}"
+        Threads="{Binding DataContext.Threads, RelativeSource={RelativeSource AncestorType=Window}}"
+        Modules="{Binding DataContext.Modules, RelativeSource={RelativeSource AncestorType=Window}}"
+      />
+    </GroupBox>
+  </Grid>
+</Window>
