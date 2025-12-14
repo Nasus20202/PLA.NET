@@ -2,151 +2,177 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using ProcessMonitor.Models;
 
 namespace ProcessMonitor.Services;
 
 public class ProcessService
 {
-    public List<ProcessInfo> GetProcesses()
+    public async Task<List<ProcessInfo>> GetProcessesAsync()
     {
-        var processes = new List<ProcessInfo>();
+        return await Task.Run(() =>
+        {
+            var processes = new List<ProcessInfo>();
 
-        foreach (var process in Process.GetProcesses())
+            foreach (var process in Process.GetProcesses())
+            {
+                try
+                {
+                    DateTime startTime;
+                    try
+                    {
+                        startTime = process.StartTime;
+                    }
+                    catch
+                    {
+                        startTime = DateTime.MinValue;
+                    }
+
+                    var processInfo = new ProcessInfo
+                    {
+                        Id = process.Id,
+                        Name = process.ProcessName,
+                        StartTime = startTime,
+                        MainWindowTitle = process.MainWindowTitle,
+                        WorkingSet = process.WorkingSet64,
+                        PrivateMemory = process.PrivateMemorySize64,
+                        Priority = process.PriorityClass,
+                        ThreadCount = process.Threads.Count,
+                        HandleCount = process.HandleCount,
+                    };
+
+                    processes.Add(processInfo);
+                }
+                catch
+                {
+                    // Skip processes we can't access
+                }
+            }
+
+            return processes;
+        });
+    }
+
+    public async Task<ProcessInfo?> GetProcessDetailsAsync(int processId)
+    {
+        return await Task.Run(() =>
         {
             try
             {
+                var process = Process.GetProcessById(processId);
+
+                DateTime startTime;
+                try
+                {
+                    startTime = process.StartTime;
+                }
+                catch
+                {
+                    startTime = DateTime.MinValue;
+                }
+
+                List<ProcessThread> threads = new();
+                try
+                {
+                    threads = process.Threads.Cast<ProcessThread>().ToList();
+                }
+                catch { }
+
+                List<ProcessModule> modules = new();
+                try
+                {
+                    modules = process.Modules.Cast<ProcessModule>().ToList();
+                }
+                catch { }
+
                 var processInfo = new ProcessInfo
                 {
                     Id = process.Id,
                     Name = process.ProcessName,
+                    StartTime = startTime,
+                    MainWindowTitle = process.MainWindowTitle,
+                    Threads = threads,
+                    Modules = modules,
                     WorkingSet = process.WorkingSet64,
                     PrivateMemory = process.PrivateMemorySize64,
                     Priority = process.PriorityClass,
                     ThreadCount = process.Threads.Count,
                     HandleCount = process.HandleCount,
-                    MainWindowTitle = process.MainWindowTitle,
                 };
 
-                try
-                {
-                    processInfo.StartTime = process.StartTime;
-                }
-                catch
-                {
-                    processInfo.StartTime = DateTime.MinValue;
-                }
-
-                processes.Add(processInfo);
+                return processInfo;
             }
             catch
             {
-                // Skip processes we can't access
+                return null;
             }
-        }
-
-        return processes;
+        });
     }
 
-    public ProcessInfo? GetProcessDetails(int processId)
+    public async Task<bool> KillProcessAsync(int processId)
     {
-        try
+        return await Task.Run(() =>
         {
-            var process = Process.GetProcessById(processId);
-            var processInfo = new ProcessInfo
-            {
-                Id = process.Id,
-                Name = process.ProcessName,
-                WorkingSet = process.WorkingSet64,
-                PrivateMemory = process.PrivateMemorySize64,
-                Priority = process.PriorityClass,
-                ThreadCount = process.Threads.Count,
-                HandleCount = process.HandleCount,
-                MainWindowTitle = process.MainWindowTitle,
-            };
-
             try
             {
-                processInfo.StartTime = process.StartTime;
+                var process = Process.GetProcessById(processId);
+                process.Kill();
+                return true;
             }
             catch
             {
-                processInfo.StartTime = DateTime.MinValue;
+                return false;
             }
+        });
+    }
 
-            // Get threads
+    public async Task<bool> ChangePriorityAsync(int processId, ProcessPriorityClass priority)
+    {
+        return await Task.Run(() =>
+        {
             try
             {
-                processInfo.Threads = process.Threads.Cast<ProcessThread>().ToList();
+                var process = Process.GetProcessById(processId);
+                process.PriorityClass = priority;
+                return true;
             }
-            catch { }
+            catch
+            {
+                return false;
+            }
+        });
+    }
 
-            // Get modules
+    public async Task<bool> ProcessExistsAsync(int processId)
+    {
+        return await Task.Run(() =>
+        {
             try
             {
-                processInfo.Modules = process.Modules.Cast<ProcessModule>().ToList();
+                Process.GetProcessById(processId);
+                return true;
             }
-            catch { }
-
-            return processInfo;
-        }
-        catch
-        {
-            return null;
-        }
+            catch
+            {
+                return false;
+            }
+        });
     }
 
-    public bool KillProcess(int processId)
+    public async Task<long> GetProcessMemoryAsync(int processId)
     {
-        try
+        return await Task.Run(() =>
         {
-            var process = Process.GetProcessById(processId);
-            process.Kill();
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public bool ChangePriority(int processId, ProcessPriorityClass priority)
-    {
-        try
-        {
-            var process = Process.GetProcessById(processId);
-            process.PriorityClass = priority;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public bool ProcessExists(int processId)
-    {
-        try
-        {
-            Process.GetProcessById(processId);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    public long GetProcessMemory(int processId)
-    {
-        try
-        {
-            var process = Process.GetProcessById(processId);
-            return process.WorkingSet64;
-        }
-        catch
-        {
-            return 0;
-        }
+            try
+            {
+                var process = Process.GetProcessById(processId);
+                return process.WorkingSet64;
+            }
+            catch
+            {
+                return 0;
+            }
+        });
     }
 }

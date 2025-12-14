@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using ProcessMonitor.Models;
 
 namespace ProcessMonitor.Services;
 
-public class ProcessTrackingService
+public class ProcessTrackingService(ProcessService processService)
 {
-    private readonly ProcessService _processService;
     private readonly ConcurrentDictionary<int, TrackedProcess> _trackedProcesses = new();
     private readonly ConcurrentDictionary<int, CancellationTokenSource> _trackingTasks = new();
     private int _samplingInterval = 1000; // 1 second default
@@ -17,11 +17,6 @@ public class ProcessTrackingService
     public event EventHandler<TrackedProcess>? ProcessTracked;
     public event EventHandler<TrackedProcess>? ProcessUntracked;
     public event EventHandler<TrackedProcess>? ProcessTerminated;
-
-    public ProcessTrackingService(ProcessService processService)
-    {
-        _processService = processService;
-    }
 
     public int SamplingInterval
     {
@@ -68,12 +63,11 @@ public class ProcessTrackingService
         cts.Cancel();
         cts.Dispose();
 
-        if (_trackedProcesses.TryGetValue(processId, out var tracked))
-        {
-            tracked.TrackingEndTime = DateTime.Now;
-            tracked.IsActive = false;
-            ProcessUntracked?.Invoke(this, tracked);
-        }
+        if (!_trackedProcesses.TryGetValue(processId, out var tracked))
+            return true;
+        tracked.TrackingEndTime = DateTime.Now;
+        tracked.IsActive = false;
+        ProcessUntracked?.Invoke(this, tracked);
 
         return true;
     }
@@ -85,7 +79,7 @@ public class ProcessTrackingService
 
     public TrackedProcess? GetTrackedProcess(int processId)
     {
-        return _trackedProcesses.TryGetValue(processId, out var tracked) ? tracked : null;
+        return _trackedProcesses.GetValueOrDefault(processId);
     }
 
     private async Task TrackProcessAsync(int processId, CancellationToken cancellationToken)
@@ -94,7 +88,7 @@ public class ProcessTrackingService
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                if (!_processService.ProcessExists(processId))
+                if (!await processService.ProcessExistsAsync(processId))
                 {
                     // Process terminated
                     if (_trackedProcesses.TryGetValue(processId, out var tracked))
@@ -109,7 +103,7 @@ public class ProcessTrackingService
                 }
 
                 // Sample memory
-                var memory = _processService.GetProcessMemory(processId);
+                var memory = await processService.GetProcessMemoryAsync(processId);
                 if (_trackedProcesses.TryGetValue(processId, out var trackedProcess))
                 {
                     var sample = new MemorySample

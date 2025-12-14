@@ -17,6 +17,15 @@ public partial class MainWindow : Window
         DataContext = new MainViewModel();
     }
 
+    private void Window_Closed(object sender, EventArgs e)
+    {
+        if (DataContext is MainViewModel viewModel)
+        {
+            viewModel.Cleanup();
+        }
+        Application.Current.Shutdown();
+    }
+
     private void ColumnHeader_Click(object sender, RoutedEventArgs e)
     {
         if (sender is DataGridColumnHeader header && header.Content is string columnName)

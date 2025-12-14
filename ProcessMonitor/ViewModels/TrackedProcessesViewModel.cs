@@ -22,7 +22,7 @@ public class TrackedProcessesViewModel : ViewModelBase
     public TrackedProcessesViewModel(ProcessTrackingService trackingService)
     {
         _trackingService = trackingService;
-        TrackedProcesses = new ObservableCollection<TrackedProcess>();
+        TrackedProcesses = [];
 
         StopTrackingCommand = new RelayCommand<TrackedProcess>(StopTracking);
         RefreshCommand = new RelayCommand(_ => LoadTrackedProcesses());
@@ -63,7 +63,7 @@ public class TrackedProcessesViewModel : ViewModelBase
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
-            if (!TrackedProcesses.Any(tp => tp.ProcessId == e.ProcessId))
+            if (TrackedProcesses.All(tp => tp.ProcessId != e.ProcessId))
             {
                 TrackedProcesses.Insert(0, e);
             }
@@ -75,11 +75,10 @@ public class TrackedProcessesViewModel : ViewModelBase
         Application.Current.Dispatcher.Invoke(() =>
         {
             var existing = TrackedProcesses.FirstOrDefault(tp => tp.ProcessId == e.ProcessId);
-            if (existing != null)
-            {
-                var index = TrackedProcesses.IndexOf(existing);
-                TrackedProcesses[index] = e;
-            }
+            if (existing == null)
+                return;
+            var index = TrackedProcesses.IndexOf(existing);
+            TrackedProcesses[index] = e;
         });
     }
 
@@ -88,11 +87,10 @@ public class TrackedProcessesViewModel : ViewModelBase
         Application.Current.Dispatcher.Invoke(() =>
         {
             var existing = TrackedProcesses.FirstOrDefault(tp => tp.ProcessId == e.ProcessId);
-            if (existing != null)
-            {
-                var index = TrackedProcesses.IndexOf(existing);
-                TrackedProcesses[index] = e;
-            }
+            if (existing == null)
+                return;
+            var index = TrackedProcesses.IndexOf(existing);
+            TrackedProcesses[index] = e;
         });
     }
 

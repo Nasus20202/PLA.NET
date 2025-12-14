@@ -11,6 +11,7 @@
   Title="Process Monitor"
   Height="700"
   Width="1200"
+  Closed="Window_Closed"
 >
   <Window.Resources>
     <converters:BoolToTrackingStatusConverter x:Key="TrackingStatusConverter" />

@@ -30,27 +30,15 @@
         <DataGridTextColumn Header="Process ID" Binding="{Binding ProcessId}" Width="100" />
         <DataGridTextColumn Header="Process Name" Binding="{Binding ProcessName}" Width="200" />
         <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100" />
-        <DataGridTextColumn
-          Header="Tracking Started"
-          Binding="{Binding TrackingStartTime, StringFormat='HH:mm:ss'}"
-          Width="120"
-        />
-        <DataGridTextColumn
-          Header="Tracking Ended"
-          Binding="{Binding TrackingEndTime, StringFormat='HH:mm:ss'}"
-          Width="120"
-        />
+        <DataGridTextColumn Header="Min Memory" Binding="{Binding MinMemoryMB}" Width="120" />
+        <DataGridTextColumn Header="Max Memory" Binding="{Binding MaxMemoryMB}" Width="120" />
         <DataGridTextColumn
           Header="Duration"
           Binding="{Binding TrackingDuration, Converter={StaticResource TimeSpanConverter}}"
           Width="120"
         />
-        <DataGridTextColumn
-          Header="Memory Samples"
-          Binding="{Binding MemorySamples.Count}"
-          Width="120"
-        />
-        <DataGridTemplateColumn Header="Actions" Width="100">
+        <DataGridTextColumn Header="Samples" Binding="{Binding MemorySamples.Count}" Width="100" />
+        <DataGridTemplateColumn Header="Actions" Width="80">
           <DataGridTemplateColumn.CellTemplate>
             <DataTemplate>
               <Button
@@ -83,6 +71,14 @@
                   <TextBlock>
                     <Run Text="Duration: " />
                     <Run Text="{Binding TrackingDuration, Converter={StaticResource TimeSpanConverter}}" />
+                  </TextBlock>
+                  <TextBlock>
+                    <Run Text="Min Memory: " />
+                    <Run Text="{Binding MinMemoryMB}" />
+                  </TextBlock>
+                  <TextBlock>
+                    <Run Text="Max Memory: " />
+                    <Run Text="{Binding MaxMemoryMB}" />
                   </TextBlock>
                   <TextBlock>
                     <Run Text="Memory Samples: " />

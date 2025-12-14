@@ -57,14 +57,17 @@ public class MainViewModel : ViewModelBase
         Threads = new ObservableCollection<ProcessThread>();
         Modules = new ObservableCollection<ProcessModule>();
 
-        RefreshCommand = new RelayCommand(_ => RefreshProcesses(), _ => !IsRefreshing);
+        RefreshCommand = new AsyncRelayCommand(
+            async _ => await RefreshProcesses(),
+            _ => !IsRefreshing
+        );
         ToggleAutoRefreshCommand = new RelayCommand(_ => ToggleAutoRefresh());
-        KillProcessCommand = new RelayCommand(
-            _ => KillSelectedProcess(),
+        KillProcessCommand = new AsyncRelayCommand(
+            async _ => await KillSelectedProcess(),
             _ => SelectedProcess != null
         );
-        ChangePriorityCommand = new RelayCommand<ProcessPriorityClass?>(
-            ChangePriority,
+        ChangePriorityCommand = new AsyncRelayCommand<ProcessPriorityClass?>(
+            async p => await ChangePriority(p),
             _ => SelectedProcess != null
         );
         ToggleTrackingCommand = new RelayCommand(
@@ -74,7 +77,7 @@ public class MainViewModel : ViewModelBase
         ShowTrackedProcessesCommand = new RelayCommand(_ => ShowTrackedProcessesWindow());
         SortCommand = new RelayCommand<string>(ApplySort);
 
-        RefreshProcesses();
+        _ = RefreshProcesses();
     }
 
     public ProcessInfo? SelectedProcess
@@ -112,14 +115,12 @@ public class MainViewModel : ViewModelBase
         get => _refreshInterval;
         set
         {
-            if (SetProperty(ref _refreshInterval, value))
-            {
-                if (IsAutoRefreshEnabled)
-                {
-                    StopAutoRefresh();
-                    StartAutoRefresh();
-                }
-            }
+            if (!SetProperty(ref _refreshInterval, value))
+                return;
+            if (!IsAutoRefreshEnabled)
+                return;
+            StopAutoRefresh();
+            StartAutoRefresh();
         }
     }
 
@@ -173,20 +174,20 @@ public class MainViewModel : ViewModelBase
         ProcessesView.SortDescriptions.Add(new SortDescription(_sortColumn, _sortDirection));
     }
 
-    private void RefreshProcesses()
+    private async Task RefreshProcesses()
     {
         IsRefreshing = true;
 
-        Task.Run(() =>
+        try
         {
-            var processes = _processService.GetProcesses();
+            var processes = await _processService.GetProcessesAsync();
             var trackedProcessIds = _trackingService
                 .GetTrackedProcesses()
                 .Where(tp => tp.IsActive)
                 .Select(tp => tp.ProcessId)
                 .ToHashSet();
 
-            Application.Current.Dispatcher.Invoke(() =>
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 var selectedId = SelectedProcess?.Id;
 
@@ -209,7 +210,27 @@ public class MainViewModel : ViewModelBase
 
                 IsRefreshing = false;
             });
-        });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            IsRefreshing = false;
+            MessageBox.Show(
+                "Access denied while refreshing processes.",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
+        catch (InvalidOperationException ex)
+        {
+            IsRefreshing = false;
+            MessageBox.Show(
+                $"Failed to refresh processes: {ex.Message}",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
     }
 
     private void LoadProcessDetails()
@@ -220,12 +241,17 @@ public class MainViewModel : ViewModelBase
         if (SelectedProcess == null)
             return;
 
-        Task.Run(() =>
+        _ = LoadProcessDetailsAsync();
+    }
+
+    private async Task LoadProcessDetailsAsync()
+    {
+        try
         {
-            var details = _processService.GetProcessDetails(SelectedProcess.Id);
+            var details = await _processService.GetProcessDetailsAsync(SelectedProcess?.Id ?? -1);
             if (details != null)
             {
-                Application.Current.Dispatcher.Invoke(() =>
+                await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
                     foreach (var thread in details.Threads)
                     {
@@ -238,7 +264,25 @@ public class MainViewModel : ViewModelBase
                     }
                 });
             }
-        });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            MessageBox.Show(
+                "Access denied while loading process details.",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
+        catch (InvalidOperationException)
+        {
+            MessageBox.Show(
+                "Failed to load process details. The process may have exited.",
+                "Error",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error
+            );
+        }
     }
 
     private void ToggleAutoRefresh()
@@ -270,7 +314,7 @@ public class MainViewModel : ViewModelBase
         _autoRefreshTimer = null;
     }
 
-    private void KillSelectedProcess()
+    private async Task KillSelectedProcess()
     {
         if (SelectedProcess == null)
             return;
@@ -284,7 +328,8 @@ public class MainViewModel : ViewModelBase
 
         if (result == MessageBoxResult.Yes)
         {
-            if (_processService.KillProcess(SelectedProcess.Id))
+            var success = await _processService.KillProcessAsync(SelectedProcess.Id);
+            if (success)
             {
                 MessageBox.Show(
                     "Process killed successfully.",
@@ -292,7 +337,7 @@ public class MainViewModel : ViewModelBase
                     MessageBoxButton.OK,
                     MessageBoxImage.Information
                 );
-                RefreshProcesses();
+                await RefreshProcesses();
             }
             else
             {
@@ -306,12 +351,13 @@ public class MainViewModel : ViewModelBase
         }
     }
 
-    private void ChangePriority(ProcessPriorityClass? priority)
+    private async Task ChangePriority(ProcessPriorityClass? priority)
     {
         if (SelectedProcess == null || !priority.HasValue)
             return;
 
-        if (_processService.ChangePriority(SelectedProcess.Id, priority.Value))
+        var success = await _processService.ChangePriorityAsync(SelectedProcess.Id, priority.Value);
+        if (success)
         {
             MessageBox.Show(
                 "Process priority changed successfully.",
@@ -319,7 +365,7 @@ public class MainViewModel : ViewModelBase
                 MessageBoxButton.OK,
                 MessageBoxImage.Information
             );
-            RefreshProcesses();
+            await RefreshProcesses();
         }
         else
         {
@@ -362,5 +408,11 @@ public class MainViewModel : ViewModelBase
             DataContext = new TrackedProcessesViewModel(_trackingService),
         };
         window.Show();
+    }
+
+    public void Cleanup()
+    {
+        StopAutoRefresh();
+        _trackingService.Dispose();
     }
 }
