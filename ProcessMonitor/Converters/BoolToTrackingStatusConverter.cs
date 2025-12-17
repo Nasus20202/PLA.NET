@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Globalization;
 using System.Windows.Data;
 
@@ -10,9 +10,9 @@ public class BoolToTrackingStatusConverter : IValueConverter
     {
         if (value is bool isTracked)
         {
-            return isTracked ? "Stop Tracking" : "Start Tracking";
+            return isTracked ? "Tracked" : "Not Tracked";
         }
-        return "Start Tracking";
+        return "Not Tracked";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

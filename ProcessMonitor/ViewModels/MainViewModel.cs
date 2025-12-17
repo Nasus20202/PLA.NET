@@ -383,18 +383,32 @@ public class MainViewModel : ViewModelBase
         if (SelectedProcess == null)
             return;
 
+        // Find the process in the collection
+        var processInList = Processes.FirstOrDefault(p => p.Id == SelectedProcess.Id);
+
         if (SelectedProcess.IsTracked)
         {
             _trackingService.StopTracking(SelectedProcess.Id);
             SelectedProcess.IsTracked = false;
             SelectedProcess.TrackedSince = null;
+            if (processInList != null)
+            {
+                processInList.IsTracked = false;
+                processInList.TrackedSince = null;
+            }
         }
         else
         {
             if (_trackingService.StartTracking(SelectedProcess.Id, SelectedProcess.Name))
             {
+                var now = DateTime.Now;
                 SelectedProcess.IsTracked = true;
-                SelectedProcess.TrackedSince = DateTime.Now;
+                SelectedProcess.TrackedSince = now;
+                if (processInList != null)
+                {
+                    processInList.IsTracked = true;
+                    processInList.TrackedSince = now;
+                }
             }
         }
 

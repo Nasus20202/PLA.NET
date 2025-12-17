@@ -16,7 +16,7 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
     <ToolBar Grid.Row="0">
-      <Button Content="Refresh" Command="{Binding RefreshCommand}" Margin="2" />
+      <Button Content="Refresh" Command="{Binding RefreshCommand}" Margin="2" ToolTip="Refresh tracked processes list" />
     </ToolBar>
     <DataGrid
       Grid.Row="1"
@@ -25,6 +25,7 @@
       IsReadOnly="True"
       SelectionMode="Single"
       Margin="5"
+      ToolTipService.ShowDuration="10000"
     >
       <DataGrid.Columns>
         <DataGridTextColumn Header="Process ID" Binding="{Binding ProcessId}" Width="100" />
@@ -65,7 +66,11 @@
                 <StackPanel>
                   <TextBlock FontWeight="Bold" Text="{Binding ProcessName}" />
                   <TextBlock>
-                    <Run Text="Started: " />
+                    <Run Text="Tracking Status: " FontWeight="SemiBold" />
+                    <Run Text="{Binding Status}" />
+                  </TextBlock>
+                  <TextBlock>
+                    <Run Text="Tracking Started: " FontWeight="SemiBold" />
                     <Run Text="{Binding TrackingStartTime, StringFormat='yyyy-MM-dd HH:mm:ss'}" />
                   </TextBlock>
                   <TextBlock>
@@ -84,7 +89,6 @@
                     <Run Text="Memory Samples: " />
                     <Run Text="{Binding MemorySamples.Count}" />
                   </TextBlock>
-                  <TextBlock Text="{Binding Status}" FontStyle="Italic" />
                 </StackPanel>
               </ToolTip>
             </Setter.Value>
